@@ -21,19 +21,11 @@ MEM_PROFILE: Final = False  # If True, dump memory profile
 
 def main(
     *,
-    args: list[str] | None = None,
-    stdout: TextIO = sys.stdout,
-    stderr: TextIO = sys.stderr,
-    clean_exit: bool = False,
-) -> None:
-    """Main entry point to the type checker.
-
-    Args:
-        args: Custom command-line arguments.  If not given, sys.argv[1:] will
-            be used.
-        clean_exit: Don't hard kill the process on exit. This allows catching
-            SystemExit.
-    """
+    args: list[str] | None = None
+) -> mypy.BindResult | None:
+    stdout: TextIO = sys.stdout
+    stderr: TextIO = sys.stderr
+    
     util.check_python_version("mypy")
     t0 = time.time()
     # To log stat() calls: os.stat = stat_proxy
@@ -43,8 +35,6 @@ def main(
 
     fscache = FileSystemCache()
     sources, options = mypy.main.process_options(args, stdout=stdout, stderr=stderr, fscache=fscache)
-    if clean_exit:
-        options.fast_exit = False
 
     formatter = util.FancyFormatter(stdout, stderr, options.hide_error_codes)
 
@@ -73,21 +63,6 @@ def main(
 
     res, messages, blockers = mypy.main.run_build(sources, options, fscache, t0, stdout, stderr)
 
-    if options.non_interactive:
-        missing_pkgs = mypy.main.read_types_packages_to_install(options.cache_dir, after_run=True)
-        if missing_pkgs:
-            # Install missing type packages and rerun build.
-            mypy.main.install_types(formatter, options, after_run=True, non_interactive=True)
-            fscache.flush()
-            print()
-            res, messages, blockers = mypy.main.run_build(sources, options, fscache, t0, stdout, stderr)
-        mypy.main.show_messages(messages, stderr, formatter, options)
-
-    if MEM_PROFILE:
-        from mypy.memprofile import print_memory_profile
-
-        print_memory_profile()
-
     code = 0
     n_errors, n_notes, n_files = util.count_stats(messages)
     if messages and n_notes < len(messages):
@@ -110,34 +85,7 @@ def main(
             print("note: Run mypy again for up-to-date results with installed types")
             code = 2
 
-    if options.fast_exit:
-        # Exit without freeing objects -- it's faster.
-        #
-        # NOTE: We don't flush all open files on exit (or run other destructors)!
-        util.hard_exit(code)
-    elif code:
-        sys.exit(code)
-
-    # HACK: keep res alive so that mypyc won't free it before the hard_exit
-    list([res])
-
-
-def _run(main_wrapper: Callable[[TextIO, TextIO], None]) -> tuple[str, str, int]:
-
-    stdout = StringIO()
-    stderr = StringIO()
-
-    try:
-        main_wrapper(stdout, stderr)
-        exit_status = 0
-    except SystemExit as system_exit:
-        exit_status = cast(int, system_exit.code)
-
-    return stdout.getvalue(), stderr.getvalue(), exit_status
-
-
-def run(args: list[str]) -> tuple[str, str, int]:
-    return _run(
-        lambda stdout, stderr: main(args=args, stdout=stdout, stderr=stderr, clean_exit=True)
-    )
-
+    if code:
+        return None
+    else:
+        return res
