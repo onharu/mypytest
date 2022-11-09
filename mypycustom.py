@@ -128,3 +128,28 @@ def main(
 
     # HACK: keep res alive so that mypyc won't free it before the hard_exit
     list([res])
+
+
+from io import StringIO
+from typing import Callable, TextIO, cast
+
+
+def _run(main_wrapper: Callable[[TextIO, TextIO], None]) -> tuple[str, str, int]:
+
+    stdout = StringIO()
+    stderr = StringIO()
+
+    try:
+        main_wrapper(stdout, stderr)
+        exit_status = 0
+    except SystemExit as system_exit:
+        exit_status = cast(int, system_exit.code)
+
+    return stdout.getvalue(), stderr.getvalue(), exit_status
+
+
+def run(args: list[str]) -> tuple[str, str, int]:
+    return _run(
+        lambda stdout, stderr: main(args=args, stdout=stdout, stderr=stderr, clean_exit=True)
+    )
+
