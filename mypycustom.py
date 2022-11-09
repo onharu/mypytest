@@ -4,25 +4,17 @@ from __future__ import annotations
 
 import mypy.main
 
-import argparse
 import os
-import subprocess
 import sys
 import time
-from gettext import gettext
-from typing import IO, Any, NoReturn, Sequence, TextIO
+from typing import TextIO
 from typing_extensions import Final
 
-from mypy import build, defaults, state, util
-from mypy.config_parser import get_config_module_names, parse_config_file, parse_version
-from mypy.errorcodes import error_codes
-from mypy.errors import CompileError
-from mypy.find_sources import InvalidSourceList, create_source_list
+from mypy import util
 from mypy.fscache import FileSystemCache
-from mypy.modulefinder import BuildSource, FindModuleCache, SearchPaths, get_search_dirs, mypy_path
-from mypy.options import INCOMPLETE_FEATURES, BuildType, Options
-from mypy.split_namespace import SplitNamespace
-from mypy.version import __version__
+
+from io import StringIO
+from typing import Callable, TextIO, cast
 
 orig_stat: Final = os.stat
 MEM_PROFILE: Final = False  # If True, dump memory profile
@@ -128,10 +120,6 @@ def main(
 
     # HACK: keep res alive so that mypyc won't free it before the hard_exit
     list([res])
-
-
-from io import StringIO
-from typing import Callable, TextIO, cast
 
 
 def _run(main_wrapper: Callable[[TextIO, TextIO], None]) -> tuple[str, str, int]:
