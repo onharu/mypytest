@@ -27,21 +27,6 @@ from mypy.version import __version__
 orig_stat: Final = os.stat
 MEM_PROFILE: Final = False  # If True, dump memory profile
 
-
-def stat_proxy(path: str) -> os.stat_result:
-    try:
-        st = orig_stat(path)
-    except os.error as err:
-        print(f"stat({path!r}) -> {err}")
-        raise
-    else:
-        print(
-            "stat(%r) -> (st_mode=%o, st_mtime=%d, st_size=%d)"
-            % (path, st.st_mode, st.st_mtime, st.st_size)
-        )
-        return st
-
-
 def main(
     *,
     args: list[str] | None = None,
@@ -65,7 +50,7 @@ def main(
         args = sys.argv[1:]
 
     fscache = FileSystemCache()
-    sources, options = process_options(args, stdout=stdout, stderr=stderr, fscache=fscache)
+    sources, options = mypy.main.process_options(args, stdout=stdout, stderr=stderr, fscache=fscache)
     if clean_exit:
         options.fast_exit = False
 
@@ -73,38 +58,38 @@ def main(
 
     if options.install_types and (stdout is not sys.stdout or stderr is not sys.stderr):
         # Since --install-types performs user input, we want regular stdout and stderr.
-        fail("error: --install-types not supported in this mode of running mypy", stderr, options)
+        mypy.main.fail("error: --install-types not supported in this mode of running mypy", stderr, options)
 
     if options.non_interactive and not options.install_types:
-        fail("error: --non-interactive is only supported with --install-types", stderr, options)
+        mypy.main.fail("error: --non-interactive is only supported with --install-types", stderr, options)
 
     if options.install_types and not options.incremental:
-        fail(
+        mypy.main.fail(
             "error: --install-types not supported with incremental mode disabled", stderr, options
         )
 
     if options.install_types and options.python_executable is None:
-        fail(
+        mypy.main.fail(
             "error: --install-types not supported without python executable or site packages",
             stderr,
             options,
         )
 
     if options.install_types and not sources:
-        install_types(formatter, options, non_interactive=options.non_interactive)
+        mypy.main.install_types(formatter, options, non_interactive=options.non_interactive)
         return
 
-    res, messages, blockers = run_build(sources, options, fscache, t0, stdout, stderr)
+    res, messages, blockers = mypy.main.run_build(sources, options, fscache, t0, stdout, stderr)
 
     if options.non_interactive:
-        missing_pkgs = read_types_packages_to_install(options.cache_dir, after_run=True)
+        missing_pkgs = mypy.main.read_types_packages_to_install(options.cache_dir, after_run=True)
         if missing_pkgs:
             # Install missing type packages and rerun build.
-            install_types(formatter, options, after_run=True, non_interactive=True)
+            mypy.main.install_types(formatter, options, after_run=True, non_interactive=True)
             fscache.flush()
             print()
-            res, messages, blockers = run_build(sources, options, fscache, t0, stdout, stderr)
-        show_messages(messages, stderr, formatter, options)
+            res, messages, blockers = mypy.main.run_build(sources, options, fscache, t0, stdout, stderr)
+        mypy.main.show_messages(messages, stderr, formatter, options)
 
     if MEM_PROFILE:
         from mypy.memprofile import print_memory_profile
@@ -127,7 +112,7 @@ def main(
         stdout.flush()
 
     if options.install_types and not options.non_interactive:
-        result = install_types(formatter, options, after_run=True, non_interactive=False)
+        result = mypy.main.install_types(formatter, options, after_run=True, non_interactive=False)
         if result:
             print()
             print("note: Run mypy again for up-to-date results with installed types")
