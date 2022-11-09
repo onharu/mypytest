@@ -1,4 +1,4 @@
-"""Mypy type checker command line tool."""
+"""Copied from https://github.com/python/mypy/blob/2d70ac0/mypy/main.py"""
 
 from __future__ import annotations
 
@@ -13,14 +13,12 @@ from typing_extensions import Final
 from mypy import util
 from mypy.fscache import FileSystemCache
 
-from io import StringIO
-from typing import Callable, TextIO, cast
+from typing import TextIO
 
 orig_stat: Final = os.stat
 MEM_PROFILE: Final = False  # If True, dump memory profile
 
 def main(
-    *,
     args: list[str] | None = None
 ) -> mypy.BindResult | None:
     stdout: TextIO = sys.stdout
@@ -35,6 +33,9 @@ def main(
 
     fscache = FileSystemCache()
     sources, options = mypy.main.process_options(args, stdout=stdout, stderr=stderr, fscache=fscache)
+
+    # AST を保存
+    options.preserve_asts = True
 
     formatter = util.FancyFormatter(stdout, stderr, options.hide_error_codes)
 
