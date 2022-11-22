@@ -42,6 +42,8 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
     def visit_if_stmt(self, i: mypy.nodes.IfStmt) -> None:
         print("visit if")
         i.else_body.accept(self)
+
+    
         
 
 #class RoreOfVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface) -> List[str]:
