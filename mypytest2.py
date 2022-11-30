@@ -35,3 +35,11 @@ class MyVisitor(mypy.visitor.NodeVisitor[mypy.nodes.Statement], CheckerPluginInt
         else:#指定したroleと代入文の右辺の式のroleが一致しないとき
           return mypy.nodes.PassStmt()#その文を取り除く
 
+result : mypy.build.BuildResult = mypycustom.main(["--show-traceback", "--verbose", "ex1.py"])
+
+src = result.graph["ex1"]
+
+for d in src.tree.defs:
+    v = MyVisitor(src.type_checker(),role())
+    d.accept(v)
+
