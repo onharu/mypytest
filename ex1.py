@@ -1,33 +1,38 @@
-'''
-def fun(a:int):
-  return a + 1
+from typing import TypeVar, Generic
 
-def even_odd():
-  list1:list[int] = [3, 5, 4567, 8, 56, 10, 234, 99,16, 13, 5, 86, 999, 1234]
-  list2:list[int] = []
-  list3:list[int] = []
-  for i in list1:
-      if i % 2 == 0:
-         list2.append(i)
-      else:
-      #if i % 2 != 0:
-         list3.append(i)
-  return list2
+T = TypeVar("T")
+U = TypeVar("U")
+
+class Roled1(Generic[T]):
+    pass
+
+class Roled2(Generic[T,U]):
+    pass
+
+#class rstr(str, Roled1[T]):
+#    pass
+
+class channel(Roled2[T,U]):
+    pass
+
+class Role:
+    pass
+
+class A(Role):
+    def __matmul__(self, x): # @ を使えるようにする
+        pass
+    pass
+
+#def at(x:T, role:Role) -> T:
+#    return x
+
+def g(x:str):
+    # A() @ ""
+    x @ A()
+    # A() @ 123
+    return x
 
 '''
-#java
-'''
-class HelloRoles@(A, B) {
-   public static void sayHello() {
-      String@A a = "Hello from A"@A; 
-      String@B b = "Hello from B"@B; 
-      System@A.out.println(a); 
-      System@B.out.println(b); 
-   }
-}
-
-'''
-
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
 T = TypeVar("T")
@@ -41,17 +46,18 @@ class A(Role):
 class B(Role):
   pass
 
-class rstr(str,Generic[T]):
-  pass
+#class rstr(str,Generic[T]):
+#  pass
 
-def at(x:str,y:T) -> rstr[T]:
-  return cast(rstr[T],x)
+def at(x:T,y:Role) -> T:
+  return x
 
 #a0 = at("Hello",A()) 
-
-a:rstr[A] = at("Hello from A",A()) 
-b:rstr[B] = at("Hello from B",B())
+def sayHello():
+  a = at("Hello from A",A()) # "Hello from A" @ A
+  b = at("Hello from B",B())
 
 #a = at("Hello","A") 
 #b = at("Hello","B")
 
+'''

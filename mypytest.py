@@ -1,14 +1,19 @@
 import sys
 import mypycustom
 import mypy
-import mypy.build
+#import mypy.build
 import mypy.visitor
 import mypy.nodes
 import mypy.checker
 import mypy.types
 from mypy.plugin import CheckerPluginInterface
-from typing import Optional, cast
+#from typing import Optional, cast
 import mypy.type_visitor
+
+result : mypy.build.BuildResult = mypycustom.main(["--show-traceback", 
+                                                    #"--verbose",
+                                                    "--custom-typeshed", "./typeshed",
+                                                    "ex1.py"])
 
 
 class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
@@ -30,10 +35,19 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
     def visit_return_stmt(self, s :mypy.nodes.ReturnStmt) -> None:
         print("visit return stmt")
         #s.expr.accept(self)
+        #print(s.expr.accept(self.type_checker.expr_checker))
+        t = s.expr.accept(self.type_checker.expr_checker)  # たとえば t = rstr[A] なら
+        print("printing class of:" + str(t))
+        print(type(t))  # mypy.types.Instance
+        if isinstance(t, mypy.types.Instance):
+            print("printing class of t.args:" + str(t.args))
+            print(type(t.args))
+        pass
+        '''
         if s.expr is not None:
             print(type(s.expr.accept(self.type_checker.expr_checker)))
         pass
-
+'''
     #addition
     #for文
     def visit_for_stmt(self, f: mypy.nodes.ForStmt) -> None:
@@ -50,13 +64,10 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
     def visit_assignment_stmt(self, a: mypy.nodes.AssignmentStmt) -> None:
         print("visit assign")
         t = a.rvalue.accept(self.type_checker.expr_checker)
-        #print(t)
-        if isinstance(t,mypy.types.Instance):
-            print(t.args[0])
-            #print(t.args[0].typ)
-    #これでロールの名前は取り出せた
-    #ロールがクラスから取ってきているのでTypeInfoからなんかやる
+        print(t)
+    
 
+'''
     def roleof(self, e:mypy.nodes.Expression) -> str:
         t = e.accept(self.type_checker.expr_checker)
         if isinstance(t,mypy.types.Instance):
@@ -64,33 +75,17 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
             return t0
         else:
             raise Exception("error")
-
-        
-
-
-
-
-
-
-
-        
-
 '''
-class RolesOfExpVisitor(mypy.visitor.ExpressionVisitor[set[str]]):
-    type_checker : mypy.checker.TypeChecker
-
-    def visit_call_expr(self, c: mypy.nodes.CallExpr) -> set[str]:
-        print("visit call")
-        c.accept(self.type_checker.expr_checker)
-       ''' 
-
-
-    
-
-result : mypy.build.BuildResult = mypycustom.main(["--show-traceback", "--verbose", "ex1.py"])
+if result is None:
+    sys.exit(1)
 
 src = result.graph["ex1"]
 
 for d in src.tree.defs:
     v = MyVisitor(src.type_checker())
     d.accept(v)
+    if isinstance(d,mypy.types.Instance):
+        pass
+
+
+    
