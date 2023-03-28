@@ -59,7 +59,7 @@ from typing_extensions import Literal, SupportsIndex, TypeAlias, TypeGuard, fina
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
-
+_R = TypeVar("_R")
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -72,10 +72,15 @@ _T2 = TypeVar("_T2")
 _T3 = TypeVar("_T3")
 _T4 = TypeVar("_T4")
 _T5 = TypeVar("_T5")
+
 _SupportsNextT = TypeVar("_SupportsNextT", bound=SupportsNext[Any], covariant=True)
 _SupportsAnextT = TypeVar("_SupportsAnextT", bound=SupportsAnext[Any], covariant=True)
 _AwaitableT = TypeVar("_AwaitableT", bound=Awaitable[Any])
 _AwaitableT_co = TypeVar("_AwaitableT_co", bound=Awaitable[Any], covariant=True)
+
+class At(Generic[_T1,_T2]):
+    pass
+
 
 class object:
     __doc__: str | None
@@ -111,7 +116,7 @@ class object:
 
     def __dir__(self) -> Iterable[str]: ...
     def __init_subclass__(cls) -> None: ...
-    def __matmul__(self:Self, _) -> Self: ...
+    def __matmul__(self:Self, _:_R) -> At[Self,_R]: ...
 
 class staticmethod(Generic[_R_co]):
     @property

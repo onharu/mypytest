@@ -34,12 +34,13 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
 
     def visit_return_stmt(self, s :mypy.nodes.ReturnStmt) -> None:
         print("visit return stmt")
-        #s.expr.accept(self)
-        #print(s.expr.accept(self.type_checker.expr_checker))
+        s.expr.accept(self)
+        print(s.expr.accept(self.type_checker.expr_checker))
         t = s.expr.accept(self.type_checker.expr_checker)  # たとえば t = rstr[A] なら
-        print("printing class of:" + str(t))
-        print(type(t))  # mypy.types.Instance
+        #print("printing class of:" + str(t))
+        #print(type(t))  # mypy.types.Instance
         if isinstance(t, mypy.types.Instance):
+            print(t.type.defn.name)
             print("printing class of t.args:" + str(t.args))
             print(type(t.args))
         pass
@@ -48,6 +49,7 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
             print(type(s.expr.accept(self.type_checker.expr_checker)))
         pass
 '''
+
     #addition
     #for文
     def visit_for_stmt(self, f: mypy.nodes.ForStmt) -> None:
@@ -64,8 +66,15 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
     def visit_assignment_stmt(self, a: mypy.nodes.AssignmentStmt) -> None:
         print("visit assign")
         t = a.rvalue.accept(self.type_checker.expr_checker)
-        print(t)
-    
+        print("printing class of:" + str(t)) 
+        print(type(t))  # mypy.types.Instance
+        if isinstance(t, mypy.types.Instance):
+            t0 = t.type.defn.name
+            print(t0)
+            print("printing class of t.args:" + str(t.args[1]))
+            print(type(t))
+        pass
+
 
 '''
     def roleof(self, e:mypy.nodes.Expression) -> str:
