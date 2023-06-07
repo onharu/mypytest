@@ -22,7 +22,7 @@ def g0(y:At[str,A]):
 
 def g(x:str):
     # A() @ ""
-    y = x @ A()
+    y = x @ A
     g0(y)
     # A() @ 123
     return x

@@ -36,7 +36,7 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
         print("visit return stmt")
         s.expr.accept(self)
         print(s.expr.accept(self.type_checker.expr_checker))
-        t = s.expr.accept(self.type_checker.expr_checker)  # たとえば t = rstr[A] なら
+        t = s.expr.accept(self.type_checker.expr_checker) 
         #print("printing class of:" + str(t))
         #print(type(t))  # mypy.types.Instance
         if isinstance(t, mypy.types.Instance):

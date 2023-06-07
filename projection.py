@@ -24,10 +24,11 @@ class MyVisitor(mypy.visitor.NodeVisitor[mypy.nodes.Statement], CheckerPluginInt
 
     def print(n: mypy.nodes.Node):
             if isinstance(n, mypy.nodes.IfStmt):
-                return "if" + print(n.expr) + "\n" + "\t" + print(n.body) + "\n" + "else:" + "\n" + "\t" + print(n.else_body) + "\n" + print("aaa")
+                return "if" + print(n.expr) + "\n" + "\t" + print(n.body) + "\n" + "else:" + "\n" + "\t" + print(n.else_body) + "\n" 
             elif isinstance(n, mypy.nodes.AssignmentStmt):
                 #＠があるかないか
                 
+
 
         
 
