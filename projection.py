@@ -9,7 +9,7 @@ import mypy.types
 #from mypy.plugin import CheckerPluginInterface
 #from typing import Optional, cast
 import mypy.type_visitor
-import name_expr
+import help_func
 
 def projection(n:mypy.nodes.Node,r:str,tc:mypy.checker.TypeChecker) -> str:
     #Expression
@@ -19,13 +19,13 @@ def projection(n:mypy.nodes.Node,r:str,tc:mypy.checker.TypeChecker) -> str:
             if n.op == "@":
                 print(n)
                 if isinstance(n.left,mypy.nodes.IntExpr) or isinstance(n.left,mypy.nodes.FloatExpr) or isinstance(n.left,mypy.nodes.StrExpr): # 1@A
-                    if name_expr.nameExpr(n.right) == r:
+                    if help_func.nameExpr(n.right) == r:
                         return str(n.left.value)
                     else:
                         return "Unit.id"
                 #None,True,Falseは？
                 if isinstance(n.left, mypy.nodes.NameExpr):
-                    if name_expr.nameExpr(n.right) == r:
+                    if help_func.nameExpr(n.right) == r:
                         return str(n.left.name)
                     else:
                         return "Unit.id"
@@ -85,14 +85,14 @@ def projection(n:mypy.nodes.Node,r:str,tc:mypy.checker.TypeChecker) -> str:
             print("type :" + str(type(n.callee)))
             if isinstance(n.callee, mypy.nodes.IndexExpr):
                 exp_list = []
-                print('type: ' +str(type(n.callee.index)))
+                print('type: ' + str(type(n.callee.index)))
                 
                 #if isinstance(n.callee.index,mypy.nodes.NameExpr):
-                if r == name_expr.nameExpr(n.callee.index):
+                if r == help_func.nameExpr(n.callee.index):
                     for i in n.args:
                         exp_list.append(projection(n.args[i],r,tc))
                     exp_var = ','.join(exp_list)
-                    return name_expr.nameExpr(n.callee.base) + "_" + r + "(" + exp_var + ")"
+                    return help_func.nameExpr(n.callee.base) + "_" + r + "(" + exp_var + ")"
                 else: # R not in Roles
                     for i in n.args:
                         exp_list.append(projection(n.args[i],r,tc))
