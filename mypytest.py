@@ -9,6 +9,8 @@ import mypy.types
 from mypy.plugin import CheckerPluginInterface
 #from typing import Optional, cast
 import mypy.type_visitor
+import name_expr
+import projection
 
 result : mypy.build.BuildResult = mypycustom.main(["--show-traceback", 
                                                     #"--verbose",
@@ -20,29 +22,29 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
     type_checker : mypy.checker.TypeChecker
 
     def __init__(self, checker:mypy.checker.TypeChecker):
-        print("init success")
+        #print("init success")
         self.type_checker = checker
     
     def visit_func_def(self, defn: mypy.nodes.FuncDef) -> None:
-        print("visit def")
+        #print("visit def")
         defn.body.accept(self)
 
     def visit_block(self, b: mypy.nodes.Block) -> None:
-        print("visit block")
+        #print("visit block")
         for s in b.body:
             s.accept(self)
 
     def visit_return_stmt(self, s :mypy.nodes.ReturnStmt) -> None:
-        print("visit return stmt")
+        #print("visit return stmt")
         s.expr.accept(self)
-        print(s.expr.accept(self.type_checker.expr_checker))
+        #print(s.expr.accept(self.type_checker.expr_checker))
         t = s.expr.accept(self.type_checker.expr_checker) 
         #print("printing class of:" + str(t))
         #print(type(t))  # mypy.types.Instance
         if isinstance(t, mypy.types.Instance):
             print(t.type.defn.name)
-            print("printing class of t.args:" + str(t.args))
-            print(type(t.args))
+            #print("printing class of t.args:" + str(t.args))
+            #print(type(t.args))
         pass
         '''
         if s.expr is not None:
@@ -53,27 +55,46 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
     #addition
     #for文
     def visit_for_stmt(self, f: mypy.nodes.ForStmt) -> None:
-        print("visit for")
+        #print("visit for")
         f.body.accept(self)
     #if文
     def visit_if_stmt(self, i: mypy.nodes.IfStmt) -> None:
-        print("visit if")
+        #print("visit if")
         for i0 in i.body:
             i0.accept(self)
         if i.else_body is not None:
             i.else_body.accept(self)
     #代入文
     def visit_assignment_stmt(self, a: mypy.nodes.AssignmentStmt) -> None:
-        print("visit assign")
+        #print("visit assign")
         t = a.rvalue.accept(self.type_checker.expr_checker)
-        print("printing class of:" + str(t)) 
-        print(type(t))  # mypy.types.Instance
+        #print("printing class of:" + str(t)) 
+        #print(type(t))  # mypy.types.Instance
         if isinstance(t, mypy.types.Instance):
             t0 = t.type.defn.name
-            print(t0)
-            print("printing class of t.args:" + str(t.args[1]))
+            #print(t0)
+            #print("printing class of t.args:" + str(t.args[1]))
             print(type(t))
-        pass
+
+
+
+    def visit_expression_stmt(self, e: mypy.nodes.ExpressionStmt) -> None:
+        print("visit expr_stmt")
+        if isinstance(e.expr,mypy.nodes.CallExpr):
+            callee = e.expr.callee
+            if isinstance(callee, mypy.nodes.NameExpr):
+                #print(str(callee.name))
+                #print(str(e))
+                if str(callee.name) == "check":
+                    print("visit check")
+                    role = name_expr.nameExpr(e.expr.args[1])
+                    p = projection.projection(e.expr.args[0],role,self.type_checker)
+                    #print(str(e.expr.args[1]))
+                    print("printing  "+str(p))
+
+    
+
+
 
 
 '''
