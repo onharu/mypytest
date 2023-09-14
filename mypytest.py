@@ -9,8 +9,8 @@ import mypy.types
 from mypy.plugin import CheckerPluginInterface
 #from typing import Optional, cast
 import mypy.type_visitor
-import name_expr
-import projection
+import help_func
+import projection_exp
 
 result : mypy.build.BuildResult = mypycustom.main(["--show-traceback", 
                                                     #"--verbose",
@@ -84,14 +84,13 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
             callee = e.expr.callee
             if isinstance(callee, mypy.nodes.NameExpr):
                 #print(str(callee.name))
-                #print(str(e))
+                #print(type(e))
                 if str(callee.name) == "check":
                     print("visit check")
-                    role = name_expr.nameExpr(e.expr.args[1])
-                    p = projection.projection(e.expr.args[0],role,self.type_checker)
-                    #print(str(e.expr.args[1]))
+                    role = help_func.nameExpr(e.expr.args[1])
+                    p = projection_exp.projection(e.expr.args[0],role,self.type_checker)
+                    print(type(e.expr.args[1]))
                     print("printing  "+str(p))
-
     
 
 
@@ -110,6 +109,7 @@ if result is None:
     sys.exit(1)
 
 src = result.graph["ex1"]
+typechecker = src.type_checker()
 
 for d in src.tree.defs:
     v = MyVisitor(src.type_checker())
