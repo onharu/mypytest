@@ -10,7 +10,8 @@ from mypy.plugin import CheckerPluginInterface
 #from typing import Optional, cast
 import mypy.type_visitor
 import help_func
-import projection_exp
+import pro_e
+
 
 result : mypy.build.BuildResult = mypycustom.main(["--show-traceback", 
                                                     #"--verbose",
@@ -84,11 +85,11 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
             callee = e.expr.callee
             if isinstance(callee, mypy.nodes.NameExpr):
                 #print(str(callee.name))
-                #print(type(e))
+                print(type(e))
                 if str(callee.name) == "check":
                     print("visit check")
                     role = help_func.nameExpr(e.expr.args[1])
-                    p = projection_exp.projection(e.expr.args[0],role,self.type_checker)
+                    p = pro_e.projection_exp(e.expr.args[0],role,self.type_checker)
                     print(type(e.expr.args[1]))
                     print("printing  "+str(p))
     

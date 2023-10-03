@@ -13,8 +13,6 @@ import mypy.type_visitor
 import help_func
 
 def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) -> str:
-    #Expression
-    #if isinstance(n,mypy.nodes.Expression):
     #literal
     if isinstance(n, mypy.nodes.OpExpr):
         if n.op == "@":
@@ -98,46 +96,6 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                     exp_list.append(projection_exp(n.args[i],r,tc))
                 exp_var = ','.join(exp_list)
                 return "Unit.id(" + exp_var + ")" 
-    ##Statement
-    #if isinstance(n,mypy.nodes.Statement):
-    #    #pass
-    #    if isinstance(n,mypy.nodes.PassStmt):
-    #        return n
-    #    #return
-    #    if isinstance(n,mypy.nodes.ReturnStmt):
-    #        expr = projection_exp(n.expr,r,tc)
-    #        return "return " + expr
-    #    #assignment
-    #    if isinstance(n,mypy.nodes.AssignmentStmt):
-    #        if r in rolesOf(n.type):
-    #            rexp = projection_exp(n.rvalue, r, tc)
-    #            return str(n.lvalues) + ":" + str(n.type) + "=" + rexp
-    #        else:
-    #            return rexp
-    #    #OperatorAssignmentStmt
-    #    if isinstance(n,mypy.nodes.OperatorAssignmentStmt):
-    #        lexp = projection_exp(n.lvalue, r, tc)
-    #        rexp = projection_exp(n.rvalue, r, tc)
-    #        return lexp + str(n.op) + rexp #normalizerを適用する必要あり
-    #    #ExpressionStmt
-    #    if isinstance(n,mypy.nodes.ExpressionStmt):
-    #        if isinstance(n.expr,mypy.nodes.CallExpr):
-    #            if isinstance(n.expr.callee,mypy.nodes.MemberExpr):#method呼び出し
-    #                f = n.expr.callee.name
-    #                if f == "select":#selectionmethod -> match文
-    #                    
-#
-
-
-
-
-
-
-
-
-        #Exp;Stm 
-
-
  
         
 def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
@@ -148,12 +106,3 @@ def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> se
             return roleName
         else:
             raise Exception
-
-        
-        
-    #if isinstance(n,mypy.nodes.MemberExpr):
-    #    rolesOf(n.expr,t)
-
-            
-    
-    

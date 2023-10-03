@@ -11,8 +11,8 @@ from enum import Enum
 #from mypy.plugin import CheckerPluginInterface
 #from typing import Optional, cast
 import mypy.type_visitor
-import projection_exp
-
+#from pro_e import projection_exp
+import pro_e
 # 構文木
 class Stmt:
     pass
@@ -98,7 +98,76 @@ class Match(Stmt):
         self.bodies = bodies
         self.stmt = stmt
 
-# normalizing
+# problem
+#・Expression　→　str を返すようになっており、射影後の構文木に存在する式が全て文字列である
+
+
+# projection (Statement)
+def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> Stmt:
+    #Pass
+    if isinstance(s,mypy.nodes.PassStmt):
+        return Pass()
+    #Return
+    if isinstance(s,mypy.nodes.ReturnStmt):
+        exp = pro_e.projection_exp(s.expr,r,tc)
+        return Return(exp) 
+    #Assignment
+    if isinstance(s,mypy.nodes.AssignmentStmt):
+        lv = s.lvalues
+        rvs = pro_e.projection_exp(s.rvalue,r,tc)
+        t = s.type
+        #if r in rolesOf(s.type,tc): # <- Typeからどうroleをとる？
+        if r in rolesOf(s.rvalue,tc): # <- （代替案）右辺の型情報からとる
+            return Asg(lv,rvs,t,s) # <- stmtはどうする？
+        else:
+            return Seq(rvs,s) 
+    #OperatorAssignment
+    if isinstance(s,mypy.nodes.OperatorAssignmentStmt):
+        rv = pro_e.projection_exp(s.rvalue,r,tc)
+        return OpAsg(s.lvalue,rv,s.op,s)
+    #if
+    if isinstance(s,mypy.nodes.IfStmt):
+        exp = pro_e.projection_exp(s.expr,r,tc)
+        stm1 = projection_stm(s.body,r,tc)
+        stm2 = projection_stm(s.else_body,r,tc)
+        if r in rolesOf(s.expr,tc):
+            return If(exp,stm1,stm2,s)
+        else:
+            return Seq(exp,stm1,stm2,s) # <- merge踏まえても何になる？
+    #Try
+    if isinstance(s,mypy.nodes.TryStmt):
+        if r in rolesOf(s.types,tc):
+            body = projection_stm(s.body,r,tc)
+            te = pro_e.projection_exp(s.types,r,tc)
+            vars = s.vars
+            exbody = projection_stm(s.handlers,r,tc)
+            return Try(body,te,vars,exbody,s)
+        
+    #Seq
+    #if isinstance(s,mypy.nodes.ExpressionStmt):
+    #    t = s.expr.accept(tc.expr_checker)
+    #    if isinstance(t,mypy.types.Instance):
+    #        if t.type.defn.name == "Enum":
+    #            if isinstance(s.expr,mypy.nodes.CallExpr):
+    #                call = s.expr.callee
+    #                if isinstance(call,mypy.nodes.MemberExpr):
+    #                    if call.name == "select":
+    #                        #roleが合っているのかの確認もいる
+    #                        assert False
+            #match文へのprojection???
+    
+
+def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
+    t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
+    if isinstance(t0, mypy.types.Instance): #Expression → Instance
+        if t0.type.defn.name == "At":
+            roleName = set([t0.args[1]]) # At[int,A]でいうところのA
+            return roleName
+        else:
+            raise Exception
+
+
+#normalizing
 def normalize(s:Stmt) -> Stmt: 
     if isinstance(s, Pass):
         return s
@@ -113,57 +182,3 @@ def normalize(s:Stmt) -> Stmt:
 # merging
 def merge(s1:Stmt, s2:Stmt) -> Stmt: 
     assert False # TODO
-
-# projection (Statement)
-def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> Stmt:
-    #Pass
-    if isinstance(s,mypy.nodes.PassStmt):
-        return Pass()
-    #Return
-    if isinstance(s,mypy.nodes.ReturnStmt):
-        exp = projection_exp.projection_exp(s.expr,r,tc)
-        return Return(exp) 
-    #Seq
-    if isinstance(s,mypy.nodes.ExpressionStmt):
-        t = s.expr.accept(tc.expr_checker)
-        if isinstance(t,mypy.types.Instance):
-            if t.type.defn.name == "Enum":
-                assert False
-
-            #enum型の区別　→　メソッド名がselect
-            #match文へのprojection???
-    #Assignment
-    #if isinstance(s,Asg):
-    #    if r in rolesOf(s.type,tc):
-
-
-
-#def projection_stm(s:mypy.nodes.Statement, r:str, tc:mypy.checker.TypeChecker) -> Stmt: 
-#    # Pass
-#    if isinstance(s,mypy.nodes.PassStmt):
-#        return s
-#    # Return
-#    if isinstance(s,mypy.nodes.ReturnStmt):
-#        s1 = projection_exp.projection_exp(s.expr,r,tc)
-#        return s1
-#    # Seq
-#    if isinstance(s,mypy.nodes.ExpressionStmt):
-#        # もしexpがEnum＠A型だったら
-#        if isinstance(s.expr,mypy.nodes.MemberExpr):
-#            if s.expr.name == "select":
-#                # match文にprojection
-#                assert False
-#        else:
-#            return projection_exp.projection_exp(s.expr,r,tc) + Seq.stmt
-        
-
-
-
-def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
-    t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
-    if isinstance(t0, mypy.types.Instance): #Expression → Instance
-        if t0.type.defn.name == "At":
-            roleName = set([t0.args[1]]) # At[int,A]でいうところのA
-            return roleName
-        else:
-            raise Exception

@@ -1,8 +1,13 @@
 from typing import TypeVar, Generic
+from enum import Enum
 
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
+
+#A = TypeVar("A")
+#B = TypeVar("B")
+#C = TypeVar("C")
 
 class Role:
     pass
@@ -17,6 +22,7 @@ class B(Role):
         pass
     pass
 
+
 class C(Generic[T]):
     pass
 class R2(Generic[U,V]):
@@ -27,6 +33,7 @@ def g0(y:At[str,A]):
 
 def check(e1,e2):
     return e1
+
 
 def g(x:str):
     # A() @ ""
@@ -53,3 +60,29 @@ def g(x:str):
 #        b = "Hello from B"
 #        print(b)
 
+
+#class Choice(Enum):
+#    HELLO = 1
+#    BYE = 2
+#
+#class Bchannel(Generic[T,V]):
+#    At[object,R2[T,V]]
+#
+
+#class Conv(Generic[A,B,C])
+#
+#    def __init__(self,ch_AB:Bchannel[A,B],ch_BC:Bchannel[B,C],ch_CA:Bchannel[C,A]):
+#        self.ch_AB = ch_AB
+#        self.ch_BC = ch_BC
+#        self.ch_CA = ch_CA
+#
+#    def communicaton(msg):
+#        ch_AB.comm(msg@A)
+#        if msg == "Hello":
+#            ch_BC.select(Choice@A(1))
+#            ch_CA.select(Choice@A(1))
+#            
+
+
+    
+    # a -> b:msg. b -> c:msg. c -> a:msg.  or   a -> b:bye. b -> c:bye. ends
