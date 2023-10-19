@@ -1,5 +1,6 @@
 from typing import TypeVar, Generic
 from enum import Enum
+import mypy
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -22,6 +23,11 @@ class B(Role):
         pass
     pass
 
+class Choice(Enum):
+    OK = 1
+    KO = 2
+
+x = Choice.OK@A()
 
 class C(Generic[T]):
     pass
@@ -38,7 +44,7 @@ def check(e1,e2):
 def g(x:str):
     # A() @ ""
     y = x @ A()
-    check(123@A,A)
+    check(Choice.OK@A(),A)
     g0(y)
     # A() @ 123
     return x
