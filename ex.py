@@ -65,19 +65,23 @@ class E(Enum):
     OK = 1
     KO = 2
 
+
+
+
+
 x = E.OK@A()
 print(type(x))
 
-def pri(a):
-    if a == E.OK:
-        print('OK')
-    elif a == E.KO:
-        print('KO')
-    else:
-        print('NO!')
-
-if __name__ == '__main__':
-    print(type(E.OK@A()))
-    pri(E.OK)
-    pri(E(2))
-    pri(1)
+#def pri(a):
+#    if a == E.OK:
+#        print('OK')
+#    elif a == E.KO:
+#        print('KO')
+#    else:
+#        print('NO!')
+#
+#if __name__ == '__main__':
+#    print(type(E.OK@A()))
+#    pri(E.OK)
+#    pri(E(2))
+#    pri(1)

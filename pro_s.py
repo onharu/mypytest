@@ -1,6 +1,6 @@
-import sys
-import mypycustom
-import mypytest
+#import sys
+#import mypycustom
+#import mypytest
 import mypy
 #import mypy.build
 import mypy.visitor
@@ -40,8 +40,9 @@ class Return(Stmt):
         self.expr = exp
 
 class Seq(Stmt): # e1; s
-    def __init__(self, exp:mypy.nodes.Expression):
+    def __init__(self, exp:mypy.nodes.Expression, rest:list[mypy.nodes.Statement]):
         self.expr = exp
+        self.rest = rest
 
 class Asg(Stmt): # id:TE = e; s
     def __init__(
@@ -107,6 +108,12 @@ class Match(Stmt): # match
         self.guards = guards
         self.bodies = bodies
 
+class Raise(Stmt): # raise
+    def __init__(self, expr:mypy.nodes.Expression | None):#, from_expr:mypy.nodes.Expression | None):
+        self.expr = expr
+        #self.from_expr = from_expr
+        
+
 
 
 # problem
@@ -171,11 +178,17 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
                     call = s.expr.callee
                     if isinstance(call,mypy.nodes.MemberExpr):
                         if call.name == "select":
-                            assert False # <- ここでMatch文へのProjection
+                            return Match(s.expr,Match.patterns,s.expr.args[0],Match.bodies)
+                            #assert False # <- ここでMatch文へのProjection
         else:
             exp = pro_e.projection_exp(s.expr,r,tc)
             return Seq(exp)
-            #match文へのprojection???
+        
+    #raise
+    if isinstance(s,mypy.nodes.RaiseStmt):
+        exp = pro_e.projection_exp(s.expr,r,tc)
+        return Raise(exp)
+
     
 # rolesOf(e) -> str
 def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
@@ -198,9 +211,15 @@ def rolesOf_t(n:mypy.types.Type, typeChecker:mypy.checker.TypeChecker) -> str:
 
 
 
+#def merge_exp(e1:str,e2:str) -> str:
+#    if e1 == e2:
+#        return e1
+#    else:
+#        raise Exception
+
 # merging
 # 同じstm,expはそのまま残す
-def merge(s1:Stmt, s2:Stmt) -> Stmt: 
+def merge(s1:Stmt, s2:Stmt) -> Stmt | None: 
     # Block (list[stm])
     if isinstance(s1,Block) and isinstance(s2,Block):
         # listの要素にマージの再帰を定義する
@@ -209,19 +228,18 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
         for i in s1.body:
             for j in s2.body:
                 return merge(s1.body[i],s2.body[j])
-        assert False
     # return
     if isinstance(s1,Return) and isinstance(s2,Return):
         if s1.expr == s2.expr:
             return s1
         else:
-            raise Exception
+            raise None
     # AsgOp
     if isinstance(s1,OpAsg) and isinstance(s2,OpAsg):
         if s1.lvalue == s2.lvalue and s1.rvalue == s2.rvalue:
             return OpAsg(s1.lvalue,s1.rvalue,s1.op)
         else:
-            return merge(s1.stmt,s2.stmt)
+            return None #merge(s1.stmt,s2.stmt)
     # e;s
     if isinstance(s1,Seq) and isinstance(s2,Seq):
         if s1.expr == s2.expr:
@@ -231,10 +249,29 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
     # if
     if isinstance(s1,If) and isinstance(s2,If):
         if s1.expr == s2.expr:
-            return If(s1.expr,merge(s1.body,s2.body),merge(s1.else_body,s2.else_body),merge(s1.stmt,s2.stmt))
+            return If(s1.expr,merge(s1.body,s2.body),merge(s1.else_body,s2.else_body))
         else:
             return None
+    # match
+    if isinstance(s1,Match) and isinstance(s2,Match):
+        if s1.subject == s2.subject:
+            # guards:list[expression]
+            # bodies: list[statement]
+            # guardsが被ったらbodiesをマージして、被ってないならlistに加える
+            # -> 新たなguards,bodiesとして定義し直せばいい
+            return Match(s1.subject,Match.patterns,new_guards,new_bodies)
+        else:
+            return None
+    
+    # Try
 
+
+    # Raise
+    if isinstance(s1,Raise) and isinstance(s2,Raise):
+        if s1.expr == s2.expr:
+            return s1
+        else:
+            return None
 
 
 

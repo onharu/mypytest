@@ -85,7 +85,7 @@ class MyVisitor(mypy.visitor.NodeVisitor[None], CheckerPluginInterface):
             callee = e.expr.callee
             if isinstance(callee, mypy.nodes.NameExpr):
                 #print(str(callee.name))
-                print(type(e))
+                #sprint(type(e))
                 if str(callee.name) == "check":
                     print("visit check")
                     role = help_func.nameExpr(e.expr.args[1])
