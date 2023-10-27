@@ -40,9 +40,8 @@ class Return(Stmt):
         self.expr = exp
 
 class Seq(Stmt): # e1; s
-    def __init__(self, exp:mypy.nodes.Expression, rest:list[mypy.nodes.Statement]):
+    def __init__(self, exp:mypy.nodes.Expression):
         self.expr = exp
-        self.rest = rest
 
 class Asg(Stmt): # id:TE = e; s
     def __init__(
@@ -120,11 +119,14 @@ class Raise(Stmt): # raise
 #・Expression　→　str を返すようになっており、射影後の構文木に存在する式が全て文字列である
 
 def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker) -> list[Stmt]:
-    prolist:list[Stmt] = []
     for i in range(len(s_list)):
-        e_s = projection_stm(s_list[i],r,tc)
-        prolist += [e_s]
-    return prolist
+        s = s_list[i]
+        if isinstance(s,mypy.nodes.ExpressionStmt): # 分岐あり(e;s -> match)
+            # selectメソッドの呼び出しの場合
+            return Match(_,_,_,projection_block(s_list[i+1:],r,tc))
+        else:# 分岐がない単一の文
+            e_s = projection_stm(s_list[i],r,tc) # それぞれの文をプロジェクションする
+            return [e_s] + projection_block(s_list[i+1:],r,tc)
 
     
 
@@ -178,7 +180,7 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
                     call = s.expr.callee
                     if isinstance(call,mypy.nodes.MemberExpr):
                         if call.name == "select":
-                            return Match(s.expr,Match.patterns,s.expr.args[0],Match.bodies)
+                            return Match(s.expr,Match.patterns,s.expr.args[0])
                             #assert False # <- ここでMatch文へのProjection
         else:
             exp = pro_e.projection_exp(s.expr,r,tc)
@@ -259,7 +261,8 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt | None:
             # bodies: list[statement]
             # guardsが被ったらbodiesをマージして、被ってないならlistに加える
             # -> 新たなguards,bodiesとして定義し直せばいい
-            return Match(s1.subject,Match.patterns,new_guards,new_bodies)
+            assert False
+            #return Match(s1.subject,Match.patterns,new_guards,new_bodies)
         else:
             return None
     
