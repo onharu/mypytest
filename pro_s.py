@@ -98,13 +98,13 @@ class Match(Stmt): # match
             self, 
             sub:mypy.nodes.Expression, 
             pat:list[mypy.nodes.Pattern], 
-            guards:list[mypy.nodes.Expression | None], 
+            #guards:list[mypy.nodes.Expression | None], 
             bodies:list[mypy.nodes.Block], 
             
             ):
         self.subject = sub
         self.patterns = pat
-        self.guards = guards
+        #self.guards = guards
         self.bodies = bodies
 
 class Raise(Stmt): # raise
@@ -122,11 +122,21 @@ def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.Typ
     for i in range(len(s_list)):
         s = s_list[i]
         if isinstance(s,mypy.nodes.ExpressionStmt): # 分岐あり(e;s -> match)
-            # selectメソッドの呼び出しの場合
-            return Match(_,_,_,projection_block(s_list[i+1:],r,tc))
+            t = s.expr.accept(tc.expr_checker)
+            if isinstance(t,mypy.types.Instance):
+                if "enum" in t.type.defn.name and r in rolesOf(s.expr): # Enum型かつroleが合っているか
+                    if isinstance(s.expr,mypy.nodes.CallExpr):
+                        call = s.expr.callee
+                        if isinstance(call,mypy.nodes.MemberExpr):
+                            if call.name == "select": # メソッド名がselectかどうか 
+                                # e = e.select(Enum型の値)　
+                                # e : s.expr.callee.expr
+                                # select : s.expr.callee.name
+                                # Enumtype value : s.expr.args
+                                return Match(pro_e.projection_exp(s.expr,r,tc),s.expr.args,projection_block(s_list[i+1:],r,tc))
         else:# 分岐がない単一の文
-            e_s = projection_stm(s_list[i],r,tc) # それぞれの文をプロジェクションする
-            return [e_s] + projection_block(s_list[i+1:],r,tc)
+            return [projection_stm(s,r,tc)] + projection_block(s_list[i+1:],r,tc) # それぞれの文をプロジェクションする
+        
 
     
 
@@ -145,23 +155,24 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         lv = s.lvalues
         rvs = pro_e.projection_exp(s.rvalue,r,tc)
         t = s.type
-        if r in rolesOf_t(s.type,tc): # <- Typeからどうroleをとる？
+        if r in rolesOf_t(t,tc): 
             return Asg(lv,rvs,t) 
         else:
             return Seq(rvs) 
     #OperatorAssignment
     if isinstance(s,mypy.nodes.OperatorAssignmentStmt):
+        lv = pro_e.projection_exp(s.lvalue,r,tc)
         rv = pro_e.projection_exp(s.rvalue,r,tc)
-        return OpAsg(s.lvalue,rv,s.op)
+        return OpAsg(lv,rv,s.op)
     #if
     if isinstance(s,mypy.nodes.IfStmt):
         exp = pro_e.projection_exp(s.expr,r,tc)
-        stm1 = projection_stm(s.body,r,tc)
-        stm2 = projection_stm(s.else_body,r,tc)
+        stm1 = projection_block(s.body,r,tc) # <- list[Block]どうする？
+        stm2 = projection_block(s.else_body,r,tc)
         if r in rolesOf(s.expr,tc):
             return If(exp,stm1,stm2)
         else:
-            return Seq(exp,merge(stm1,stm2)) # <- merge踏まえても何になる？
+            return Seq(exp,merge(stm1,stm2)) # <- Seqは e;s の形だが、sの部分にmerge(stm1,stm2)入れるにはどうしたらいい
     #Try
     if isinstance(s,mypy.nodes.TryStmt):
         if r in rolesOf(s.types,tc):
@@ -173,18 +184,8 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         
     #Seq
     if isinstance(s,mypy.nodes.ExpressionStmt):
-        t = s.expr.accept(tc.expr_checker)
-        if isinstance(t,mypy.types.Instance):
-            if "enum" in t.type.defn.name and r in rolesOf(s.expr):
-                if isinstance(s.expr,mypy.nodes.CallExpr):
-                    call = s.expr.callee
-                    if isinstance(call,mypy.nodes.MemberExpr):
-                        if call.name == "select":
-                            return Match(s.expr,Match.patterns,s.expr.args[0])
-                            #assert False # <- ここでMatch文へのProjection
-        else:
-            exp = pro_e.projection_exp(s.expr,r,tc)
-            return Seq(exp)
+        exp = pro_e.projection_exp(s.expr,r,tc)
+        return Seq(exp)
         
     #raise
     if isinstance(s,mypy.nodes.RaiseStmt):
