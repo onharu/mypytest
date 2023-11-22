@@ -1,6 +1,7 @@
 from typing import TypeVar, Generic
 from enum import Enum
 import mypy
+import builtins
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -34,7 +35,7 @@ class C(Generic[T]):
 class R2(Generic[U,V]):
     pass
 
-def g0(y:At[str,A]):
+def g0(y:builtins.At[str,A]):
     return y
 
 def check(e1,e2):

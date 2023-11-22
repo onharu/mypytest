@@ -13,3 +13,9 @@ def nameExpr(e:mypy.nodes.Expression) -> str:
         return e.name
     else:
         raise Exception()
+    
+def isNone(n:mypy.nodes.Node):
+    if n is None:
+        raise Exception
+    else:
+        pass

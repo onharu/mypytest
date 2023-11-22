@@ -7,6 +7,7 @@ import mypy.main
 import os
 import sys
 import time
+import mypy.build
 from typing import TextIO
 from typing_extensions import Final
 
