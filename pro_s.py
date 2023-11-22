@@ -1,23 +1,22 @@
-#import sys
-#import mypycustom
-#import mypytest
 import mypy
-#import mypy.build
 import mypy.visitor
 import mypy.nodes
 import mypy.checker
 import mypy.types
 from enum import Enum
-#from mypy.plugin import CheckerPluginInterface
-#from typing import Optional, cast
 import mypy.type_visitor
-#from pro_e import projection_exp
 import pro_e
 import mypy.patterns
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from mypy.patterns import Pattern
-import help_func
+#import sys
+#import mypycustom
+#import mypytest
+#import mypy.build
+#from mypy.plugin import CheckerPluginInterface
+#from typing import Optional, cast
+#from pro_e import projection_exp
 
 # Lvalue = Union['NameExpr', 'MemberExpr', 'IndexExpr', 'SuperExpr', 'StarExpr','TupleExpr']; 
 Lvalue: mypy.nodes._TypeAlias = mypy.nodes.Expression
@@ -93,21 +92,6 @@ class If_else(Stmt):
         self.exp = exp
         self.body = body
         self.else_body = else_body
-        
-
-#class Try(Stmt): # try:s; except e:s2; s 
-#    def __init__(
-#            self, 
-#            body:mypy.nodes.Block, 
-#            vars:list[str | None], 
-#            types:list[str | None], 
-#            handlers:list[mypy.nodes.Block], 
-#            ):
-#        self.body = body
-#        self.vars = vars
-#        self.types = types
-#        self.handlers = handlers
-        
 
 class Match(Stmt): # match
     def __init__(
@@ -129,11 +113,7 @@ class Raise(Stmt): # raise
         #self.from_expr = from_expr
         
 
-
-
-# problem
-#・Expression　→　str を返すようになっており、射影後の構文木に存在する式が全て文字列である
-# projection_blockはlist[statement]の方がいいのか、Blockの方がいいのか
+#block
 def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker)-> list[Stmt]:
     for i in range(len(s_list)):
         s = s_list[i]
@@ -204,11 +184,6 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             raise Exception
         else_projected = projection_block(s.else_body.body,r,tc)
         return If(exprs_projected,bodies_projected,Block(else_projected))
-
-        #if s.else_body is None:
-        #    raise Exception
-        #return projection_if_elif_main(r,s.expr,s.body,s.else_body,tc) # else_bodyはblockなのだが、今はStmt型になっている
-
     #Seq
     elif isinstance(s,mypy.nodes.ExpressionStmt):
         exp = pro_e.projection_exp(s.expr,r,tc)
