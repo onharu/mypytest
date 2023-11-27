@@ -21,8 +21,6 @@ result : mypy.build.BuildResult | None = mypycustom.main(["--show-traceback",
 
 
 
-
-
 if result is None:
     sys.exit(1)
 
@@ -35,7 +33,9 @@ if src.tree is None:
 
 
 # projectionを読み込む
-print(pro_s.projection_block(src.tree.defs,"A",typechecker))
+for stm in pro_s.projection_block(src.tree.defs,"A",typechecker):
+    print(stm)
+#print(pro_s.projection_block(src.tree.defs,"A",typechecker))
 
 #for d in src.tree.defs:
 #    v = MyVisitor(src.type_checker())

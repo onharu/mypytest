@@ -12,11 +12,22 @@ import mypy.types
 import mypy.type_visitor
 import help_func
 
+#def projection_exps(n:list[mypy.nodes.Expression],r:str,tc:mypy.checker.TypeChecker) -> list[str]:
+#    if isinstance(n,mypy.nodes.TupleExpr):
+#        tuple_list:list[str] = []
+#        for e in n.items:
+#            te = projection_exp(e,r,tc)
+#            tuple_list += [te]
+#        return tuple_list
+#    else:
+#        raise Exception
+    
+
 def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) -> str:
     #literal
     if isinstance(n, mypy.nodes.OpExpr):
         if n.op == "@":
-            print(n)
+            #print(n)
             if isinstance(n.left,mypy.nodes.IntExpr) or isinstance(n.left,mypy.nodes.FloatExpr) or isinstance(n.left,mypy.nodes.StrExpr): # 1@A
                 if help_func.nameExpr(n.right) == r:
                     return str(n.left.value)
@@ -107,6 +118,8 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                 return "Unit.id(" + exp_var + ")" 
         else:
             raise Exception
+    elif isinstance(n,mypy.nodes.NameExpr):
+        return n.name
     else:
         raise Exception
  

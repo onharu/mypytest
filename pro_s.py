@@ -7,9 +7,11 @@ from enum import Enum
 import mypy.type_visitor
 import pro_e
 import mypy.patterns
+import ast
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from mypy.patterns import Pattern
+
 #import sys
 #import mypycustom
 #import mypytest
@@ -47,17 +49,25 @@ class Return(Stmt):
 class Seq(Stmt): # e1; s
     def __init__(self, exp:str):
         self.expr = exp
+    def __repr__(self):
+        return f"{self.expr}"
 
 class Asg(Stmt): # id:TE = e; s
     def __init__(
             self, 
             lv:list[str], 
-            rv:str, 
+            rv:str,
             type:mypy.types.Type | None, 
             ):
         self.lvalues = lv
         self.rvalue = rv
         self.type = type
+    def __repr__(self):
+        return f"{self.lvalues} = {self.rvalue}"
+        #if self.type is None:
+        #    return f"{self.lvalues} = {self.rvalue}"
+        #else:
+        #    return f"{self.lvalues} : {self.type} = {self.rvalue}"
         
 class OpAsg(Stmt): # e1 Asgop e2; s
     def __init__(
@@ -82,16 +92,16 @@ class If(Stmt): # if e1:s1; else:s2; s
         self.body = body
         self.else_body = else_body
 
-class If_else(Stmt):
-    def __init__(
-            self,
-            exp:str,
-            body:Block,
-            else_body: Stmt
-        ):
-        self.exp = exp
-        self.body = body
-        self.else_body = else_body
+#class If_else(Stmt):
+#    def __init__(
+#            self,
+#            exp:str,
+#            body:Block,
+#            else_body: Stmt
+#        ):
+#        self.exp = exp
+#        self.body = body
+#        self.else_body = else_body
 
 class Match(Stmt): # match
     def __init__(
@@ -111,12 +121,30 @@ class Raise(Stmt): # raise
     def __init__(self, expr:str | None):#, from_expr:str | None):
         self.expr = expr
         #self.from_expr = from_expr
+
+class ImportAll(Stmt):
+    id: str
+    relative: int
+    imported_names: list[str]
+    def __init__(self,id:str,relative:int):
+        super().__init__()
+        self.id = id
+        self.relative = relative
+        self.imported_names = []
+    def __repr__(self):
+        return f"from {self.id} import *"
+    #def __str__(self):
+    #    return f"from {self.id} import *"
         
 
 #block
 def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker)-> list[Stmt]:
-    for i in range(len(s_list)):
-        s = s_list[i]
+    #for i in range(len(s_list)):
+    if s_list == []:
+        return []
+    else:
+        #print(len(s_list))
+        s = s_list[0]
         # 分岐あり(e;s -> match)
         if isinstance(s,mypy.nodes.ExpressionStmt):
             t = s.expr.accept(tc.expr_checker) # 型情報入手
@@ -126,18 +154,17 @@ def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.Typ
                         isinstance(s.expr,mypy.nodes.CallExpr) and \
                             isinstance(s.expr.callee,mypy.nodes.MemberExpr) and \
                                 s.expr.callee.name == "select":# enum型かつロールが合っているかつメソッド名がselectのとき
-                                # e = e.select(Enum型の値)　
-                                # e : s.expr.callee.expr
-                                # select : s.expr.callee.name
-                                # Enumtype value : s.expr.args
                 if len(s.expr.args) == 1:# args:list[expression] <- このリストの要素は一つしかあり得ない
                     pro_args = pro_e.projection_exp(s.expr.args[0],r,tc)
-                    return [Match(pro_e.projection_exp(s.expr,r,tc),[pro_args],[Block(projection_block(s_list[i+1:],r,tc))])]
+                    return [Match(pro_e.projection_exp(s.expr,r,tc),[pro_args],[Block(projection_block(s_list[1:],r,tc))])]
                 else:
                     raise Exception
+            else:
+                raise Exception
         else:# 分岐がない単一の文
-            return [projection_stm(s,r,tc)] + projection_block(s_list[i+1:],r,tc) # それぞれの文をプロジェクションする
-    assert False
+            #print(s)
+            return [projection_stm(s,r,tc)] + projection_block(s_list[1:],r,tc) # それぞれの文をプロジェクションする
+    #assert False
 
 
 
@@ -152,7 +179,22 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             raise Exception
         exp = pro_e.projection_exp(s.expr,r,tc)
         return Return(exp) 
-    #Assignment
+    #Assignment変更後
+    #elif isinstance(s,mypy.nodes.AssignmentStmt):
+    #    lv = s.lvalues
+    #    lv_pro:list[str] = []
+    #    for i in range(len(lv)):
+    #        l = pro_e.projection_exp(lv[i],r,tc)
+    #        lv_pro += [l] 
+    #    rvs = pro_e.projection_exp(s.rvalue,r,tc)
+    #    t = s.type
+    #    return Asg(lv_pro,rvs,t)
+        #if r in rolesOf_t(t,tc): 
+        #    return Asg(lv_pro,rvs,t) 
+        #else:
+        #    return Seq(rvs) 
+        
+    #Assinment変更前
     elif isinstance(s,mypy.nodes.AssignmentStmt):
         lv = s.lvalues
         lv_pro:list[str] = []
@@ -161,10 +203,13 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             lv_pro += [l] 
         rvs = pro_e.projection_exp(s.rvalue,r,tc)
         t = s.type
-        if r in rolesOf_t(t,tc): 
-            return Asg(lv_pro,rvs,t) 
-        else:
-            return Seq(rvs) 
+        if t is None:#型を明示していない場合（型推論で行う場合）
+            return Asg(lv_pro,rvs,t)
+        else:#型明示
+            if r in rolesOf_t(t,tc): 
+                return Asg(lv_pro,rvs,t) 
+            else:
+                return Seq(rvs) 
     #OperatorAssignment
     elif isinstance(s,mypy.nodes.OperatorAssignmentStmt):
         l = pro_e.projection_exp(s.lvalue,r,tc)
@@ -194,8 +239,12 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             raise Exception
         exp = pro_e.projection_exp(s.expr,r,tc)
         return Raise(exp)
+    #import
+    elif isinstance(s,mypy.nodes.ImportAll):
+        return ImportAll(s.id,s.relative)
+    #others
     else:
-        raise Exception
+        raise Exception("unexpected syntax",s)
 
     
 # rolesOf(e) -> str
@@ -212,6 +261,7 @@ def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> se
         
 # rolesOf(type) -> str
 def rolesOf_t(n:mypy.types.Type | None, typeChecker:mypy.checker.TypeChecker) -> set[str]:
+    print(n)
     if isinstance(n,mypy.types.Instance):
         if n.type.defn.name == "At":
             roleName = set(str([n.args[1]])) # At[int,A]でいうところのA

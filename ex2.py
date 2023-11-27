@@ -129,3 +129,12 @@
 #  else_projected = projection_block(else_stm.body,r,tc)
 #  return projection_if_elif(r, exprs, bodies, else_projected,tc)
 #
+#if s.else_body is None:
+        #    raise Exception
+        #return projection_if_elif_main(r,s.expr,s.body,s.else_body,tc) # else_bodyはblockなのだが、今はStmt型になっている
+
+list = [1,2,3,4,5]
+for i in range(len(list)):
+  i = i + 5
+  print(i)
+print(list)

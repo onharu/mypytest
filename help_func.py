@@ -12,7 +12,7 @@ def nameExpr(e:mypy.nodes.Expression) -> str:
     if isinstance(e,mypy.nodes.NameExpr):
         return e.name
     else:
-        raise Exception()
+        raise Exception
     
 def isNone(n:mypy.nodes.Node):
     if n is None:
