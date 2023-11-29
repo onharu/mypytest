@@ -43,6 +43,11 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                 raise Exception
         else:#literalで＠がないのは例外扱いする
             raise Exception
+        #else:#比較演算子
+        #    if r in rolesOf(n.left,tc) and r in rolesOf(n.right,tc):
+        #        return projection_exp(n.left,r,tc) + str(n.op) + projection_exp(n.right,r,tc)
+        #    else:
+        #        return "Unit.id("  + projection_exp(n.left,r,tc)+","+ projection_exp(n.right,r,tc) +" )" 
     #関数呼び出し、メソッド呼び出し、クラス定義
     elif isinstance(n, mypy.nodes.CallExpr):
         #関数 f = variable
@@ -126,6 +131,7 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
         
 def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
     t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
+    print(t0)
     if isinstance(t0, mypy.types.Instance): #Expression → Instance
         if t0.type.defn.name == "At":
             roleName = set(str([t0.args[1]])) # At[int,A]でいうところのA
