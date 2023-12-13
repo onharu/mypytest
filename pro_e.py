@@ -24,7 +24,7 @@ import help_func
     
 
 def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) -> str:
-    #literal
+    #literal(role付き)
     if isinstance(n, mypy.nodes.OpExpr):
         if n.op == "@":
             #print(n)
@@ -39,15 +39,28 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                     return str(n.left.name)
                 else:
                     return "Unit.id"
+            elif isinstance(n.left,mypy.nodes.OpExpr):
+                return projection_exp(n.left,r,tc)
             else:
                 raise Exception
-        else:#literalで＠がないのは例外扱いする
+        else:#二項演算 (+ - * / %)
+            if r in rolesOf(n.left,tc) and r in rolesOf(n.right,tc):
+                return projection_exp(n.left,r,tc) + str(n.op) + projection_exp(n.right,r,tc)
+            else:
+                return "Unit.id("  + projection_exp(n.left,r,tc)+","+ projection_exp(n.right,r,tc) +" )" 
+        #else:#literalで＠がないのは例外扱いする
+        #    raise Exception
+    #比較演算子 (二つの式の比較限定)
+    elif isinstance(n,mypy.nodes.ComparisonExpr):
+        assert len(n.operators)==1
+        assert len(n.operands)==2
+        if n.operators[0] == ">" or ">=" or "==" or "<" or "<=" or "!=" or "and":
+            left = projection_exp(n.operands[0],r,tc)
+            right = projection_exp(n.operands[1],r,tc)
+            return left+n.operators[0]+right
+        else:
             raise Exception
-        #else:#比較演算子
-        #    if r in rolesOf(n.left,tc) and r in rolesOf(n.right,tc):
-        #        return projection_exp(n.left,r,tc) + str(n.op) + projection_exp(n.right,r,tc)
-        #    else:
-        #        return "Unit.id("  + projection_exp(n.left,r,tc)+","+ projection_exp(n.right,r,tc) +" )" 
+
     #関数呼び出し、メソッド呼び出し、クラス定義
     elif isinstance(n, mypy.nodes.CallExpr):
         #関数 f = variable
@@ -125,6 +138,9 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
             raise Exception
     elif isinstance(n,mypy.nodes.NameExpr):
         return n.name
+    elif isinstance(n,mypy.nodes.IntExpr):
+        return str(n.value)
+
     else:
         raise Exception
  

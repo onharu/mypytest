@@ -31,5 +31,19 @@
 #class Choice(Enum):
 #    OK = 1
 #    KO = 2
+#from mypy import *
 from role import *
-x = 123@B
+#from builtins import *
+#x:int
+#x = 1 + 1
+class Conv(Ch2[A,B]):
+  pass
+
+#x = 123@A
+#
+#if x > 100@A: # (int@A > int@A)@boolになって欲しい
+#  assert 1
+#elif x <= 200@A:
+#  assert 2
+#else:
+#  assert 3

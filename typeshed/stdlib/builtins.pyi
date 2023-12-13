@@ -72,13 +72,23 @@ _T2 = TypeVar("_T2")
 _T3 = TypeVar("_T3")
 _T4 = TypeVar("_T4")
 _T5 = TypeVar("_T5")
+_R1 = TypeVar("_R1")
+_R2 = TypeVar("_R2")
+_R3 = TypeVar("_R3")
 
 _SupportsNextT = TypeVar("_SupportsNextT", bound=SupportsNext[Any], covariant=True)
 _SupportsAnextT = TypeVar("_SupportsAnextT", bound=SupportsAnext[Any], covariant=True)
 _AwaitableT = TypeVar("_AwaitableT", bound=Awaitable[Any])
 _AwaitableT_co = TypeVar("_AwaitableT_co", bound=Awaitable[Any], covariant=True)
 
-class At(Generic[_T1,_T2]):
+class At(Generic[_T1,_T2],_T1):
+    pass
+
+class Ch1(Generic[_R1]):
+    pass
+class Ch2(Generic[_R1,_R2]):
+    pass
+class Ch3(Generic[_R1,_R2,_R3]):
     pass
 
 

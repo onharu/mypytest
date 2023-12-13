@@ -38,6 +38,8 @@ class Block(Stmt): # list[stm]
         # -> super().__init__()で親クラスの__init__と同様の処理が可能
         # -> 今回は親クラスのStmtに__init__がないためなくても良い
         self.body = body
+    def __repr__(self):
+        return f"{self.body}"
 
 class Pass(Stmt):
     pass
@@ -55,7 +57,8 @@ class Seq(Stmt): # e1; s
 class Asg(Stmt): # id:TE = e; s
     def __init__(
             self, 
-            lv:list[str], 
+            #lv:list[str], assignment変更前
+            lv:str,
             rv:str,
             type:mypy.types.Type | None, 
             ):
@@ -79,6 +82,8 @@ class OpAsg(Stmt): # e1 Asgop e2; s
         self.lvalue = lv
         self.rvalue = rv
         self.op = op
+    def __repr__(self):
+        return f"{self.lvalue} {self.op} {self.rvalue}"
         
 class If(Stmt): # if e1:s1; else:s2; s
     def __init__(
@@ -91,6 +96,19 @@ class If(Stmt): # if e1:s1; else:s2; s
         self.expr = exp
         self.body = body
         self.else_body = else_body
+    def __repr__(self):
+        #b_str = ""
+        #b_str += list_to_str(self.body[0].body)
+        #for block in self.body[1:]:
+        #    b_to_str = list_to_str(block.body)
+        #    b_str = b_str + "elif:\n     " +b_to_str
+        #if len(self.expr) == 1:
+        #    return f"if {self.expr[0]}:\n    {self.body[0]}\nelse:\n    {self.else_body}"
+        #if len(self.expr) == 2:
+        return f"if {list_to_str(self.expr)}:\n    {list_to_str(self.body[0].body)} \nelse:\n    {list_to_str(self.else_body.body)}"
+            #return f"if {self.expr[0]}:\n    {self.body[0]}\nelif {self.expr[1:]}:\n    {self.body[1:]}\nelse:\n    {self.else_body}"
+        
+
 
 #class If_else(Stmt):
 #    def __init__(
@@ -122,20 +140,33 @@ class Raise(Stmt): # raise
         self.expr = expr
         #self.from_expr = from_expr
 
+class Assert(Stmt): # assert
+    expr:str
+    def __init__(self,expr:str):
+        self.expr = expr
+    def __repr__(self):
+        return f"assert {self.expr}"
+
 class ImportAll(Stmt):
-    id: str
-    relative: int
-    imported_names: list[str]
-    def __init__(self,id:str,relative:int):
+    #id: str
+    #relative: int
+    #imported_names: list[str]
+    def __init__(self,id:str,relative:int):#,imported_names: list[str]):
         super().__init__()
         self.id = id
         self.relative = relative
-        self.imported_names = []
+        #self.imported_names = []
     def __repr__(self):
         return f"from {self.id} import *"
     #def __str__(self):
     #    return f"from {self.id} import *"
-        
+
+# listの[]を省略する関数 (list -> string)
+def list_to_str(list:list) -> str:
+    str_list = ''.join(str(x) for x in list)
+    return str_list
+
+
 
 #block
 def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker)-> list[Stmt]:
@@ -179,37 +210,46 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             raise Exception
         exp = pro_e.projection_exp(s.expr,r,tc)
         return Return(exp) 
-    #Assignment変更後
+    #Assignment変更前
     #elif isinstance(s,mypy.nodes.AssignmentStmt):
     #    lv = s.lvalues
     #    lv_pro:list[str] = []
     #    for i in range(len(lv)):
     #        l = pro_e.projection_exp(lv[i],r,tc)
     #        lv_pro += [l] 
-    #    rvs = pro_e.projection_exp(s.rvalue,r,tc)
-    #    t = s.type
-    #    return Asg(lv_pro,rvs,t)
-        #if r in rolesOf_t(t,tc): 
-        #    return Asg(lv_pro,rvs,t) 
-        #else:
-        #    return Seq(rvs) 
+    #        rvs = pro_e.projection_exp(s.rvalue,r,tc)
+    #        t = s.type
+    #        if t is None and r in rolesOf(s.rvalue,tc):#型を明示していない場合（型推論で行う場合）
+    #            return Asg(lv_pro,rvs,t)
+    #        elif t is None and r not in rolesOf(s.rvalue,tc):
+    #            return Seq(rvs)
+    #        else:#型明示
+    #            if r in rolesOf_t(t,tc): 
+    #                return Asg(lv_pro,rvs,t) 
+    #            else:
+    #                return Seq(rvs) 
+    #    else:
+    #        raise Exception
         
-    #Assinment変更前
+    #Assinment変更後
     elif isinstance(s,mypy.nodes.AssignmentStmt):
         lv = s.lvalues
-        lv_pro:list[str] = []
-        for i in range(len(lv)):
-            l = pro_e.projection_exp(lv[i],r,tc)
-            lv_pro += [l] 
-        rvs = pro_e.projection_exp(s.rvalue,r,tc)
-        t = s.type
-        if t is None:#型を明示していない場合（型推論で行う場合）
-            return Asg(lv_pro,rvs,t)
-        else:#型明示
-            if r in rolesOf_t(t,tc): 
-                return Asg(lv_pro,rvs,t) 
-            else:
-                return Seq(rvs) 
+        if len(lv) == 1:
+            l = pro_e.projection_exp(lv[0],r,tc)
+            rvs = pro_e.projection_exp(s.rvalue,r,tc)
+            t = s.type
+            if t is None and r in rolesOf(s.rvalue,tc):#型を明示していない場合（型推論で行う場合）
+                return Asg(l,rvs,t)
+            elif t is None and r not in rolesOf(s.rvalue,tc):
+                return Seq(rvs)
+            else:#型明示
+                if r in rolesOf_t(t,tc): 
+                    return Asg(l,rvs,t) 
+                else:
+                    return Seq(rvs) 
+        else:
+            raise Exception
+        
     #OperatorAssignment
     elif isinstance(s,mypy.nodes.OperatorAssignmentStmt):
         l = pro_e.projection_exp(s.lvalue,r,tc)
@@ -239,6 +279,11 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             raise Exception
         exp = pro_e.projection_exp(s.expr,r,tc)
         return Raise(exp)
+    #assert
+    elif isinstance(s,mypy.nodes.AssertStmt):
+        exp = pro_e.projection_exp(s.expr,r,tc)
+        return Assert(exp)
+
     #import
     elif isinstance(s,mypy.nodes.ImportAll):
         return ImportAll(s.id,s.relative)

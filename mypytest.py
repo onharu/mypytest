@@ -6,35 +6,37 @@ import mypy.visitor
 import mypy.nodes
 import mypy.checker
 import mypy.types
-from mypy.plugin import CheckerPluginInterface
+#from mypy.plugin import CheckerPluginInterface
 #from typing import Optional, cast
 import mypy.type_visitor
-import help_func
-import pro_e
+#import help_func
+#import pro_e
 import pro_s
+import pro_class
 
-
+# result <- ASTが保存されている
 result : mypy.build.BuildResult | None = mypycustom.main(["--show-traceback", 
                                                     #"--verbose",
                                                     "--custom-typeshed", "./typeshed",
                                                     "ex.py"])
 
-
-
-if result is None:
+if result is None: # Noneを省く
     sys.exit(1)
 
-src = result.graph["ex"]
+src = result.graph["ex"] #木構造
 typechecker = src.type_checker()
 
-if src.tree is None:
+if src.tree is None: # Noneを省く
     sys.exit(1)
-
-
-
+    
 # projectionを読み込む
-for stm in pro_s.projection_block(src.tree.defs,"A",typechecker):
+#for stm in pro_s.projection_block(src.tree.defs,"A",typechecker):
+#    print(stm)
+
+for stm in pro_class.projection_class(src.tree.defs,"A",typechecker):
     print(stm)
+
+
 #print(pro_s.projection_block(src.tree.defs,"A",typechecker))
 
 #for d in src.tree.defs:
