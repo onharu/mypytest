@@ -33,11 +33,14 @@
 #    KO = 2
 #from mypy import *
 from role import *
+
 #from builtins import *
 #x:int
 #x = 1 + 1
+#import role
 class Conv(Ch2[A,B]):
-  pass
+  def f(self,x:At[int,A]):
+    pass
 
 #x = 123@A
 #

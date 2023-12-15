@@ -44,7 +44,7 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
             else:
                 raise Exception
         else:#二項演算 (+ - * / %)
-            if r in rolesOf(n.left,tc) and r in rolesOf(n.right,tc):
+            if r in help_func.rolesOf(n.left,tc) and r in help_func.rolesOf(n.right,tc):
                 return projection_exp(n.left,r,tc) + str(n.op) + projection_exp(n.right,r,tc)
             else:
                 return "Unit.id("  + projection_exp(n.left,r,tc)+","+ projection_exp(n.right,r,tc) +" )" 
@@ -66,20 +66,20 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
         #関数 f = variable
         if isinstance(n.callee, mypy.nodes.NameExpr): 
             exp_list:list[str] = []
-            if r in rolesOf(n,tc): #f(Exp)のroleとprojection_expのroleが一致する時
+            if r in help_func.rolesOf(n,tc): #f(Exp)のroleとprojection_expのroleが一致する時
                 for exp_i in n.args:
                     exp_list.append(projection_exp(exp_i,r,tc))
                 exp_var = ','.join(exp_list)
                 return str(n.callee) + exp_var
             else:#f(Exp)のroleとprojection_expのroleが一致しない時
                 for exp_i in n.args:
-                    if r in rolesOf(exp_i,tc):
+                    if r in help_func.rolesOf(exp_i,tc):
                         exp_list.append(projection_exp(exp_i,r,tc))
                     else:
                         n.args.remove(exp_i)
                 exp_var = ','.join(exp_list)
                 return "Unit.id(" + str(n.callee) + exp_var + ")"
-                #if r in rolesOf(n.args,tc):
+                #if r in help_func.rolesOf(n.args,tc):
                 #    for exp_i in n.args:
                 #        exp_list.append(projection_exp(exp_i ,r,tc))
                 #    exp_var = ','.join(exp_list)
@@ -93,7 +93,7 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
         elif isinstance(n.callee, mypy.nodes.MemberExpr):
             exp_list_i = []
             #exp_list_j = []
-            if r in rolesOf(n,tc): # R in e.f(e')
+            if r in help_func.rolesOf(n,tc): # R in e.f(e')
                 for exp_i in n.args:
                     exp_list_i.append(projection_exp(exp_i ,r,tc))
                 exp_var_i = ','.join(exp_list_i)
@@ -102,7 +102,7 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                 #exp_var_j = ','.join(exp_list_j)
                 return projection_exp(n.callee.expr,r,tc) + "." + n.callee.name + "(" + exp_var_i + ")"
             else: # R not in e.f(e')
-                if r in rolesOf(n.callee.expr,tc): # R in e
+                if r in help_func.rolesOf(n.callee.expr,tc): # R in e
                     for exp_i in n.args:
                         exp_list_i.append(projection_exp(exp_i ,r,tc))
                     exp_var_i = ','.join(exp_list_i)
@@ -141,18 +141,5 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
     elif isinstance(n,mypy.nodes.IntExpr):
         return str(n.value)
 
-    else:
-        raise Exception
- 
-        
-def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
-    t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
-    print(t0)
-    if isinstance(t0, mypy.types.Instance): #Expression → Instance
-        if t0.type.defn.name == "At":
-            roleName = set(str([t0.args[1]])) # At[int,A]でいうところのA
-            return roleName
-        else:
-            raise Exception
     else:
         raise Exception

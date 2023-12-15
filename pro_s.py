@@ -5,12 +5,12 @@ import mypy.checker
 import mypy.types
 from enum import Enum
 import mypy.type_visitor
-import pro_e
+from pro_e import *
+from help_func import *
 import mypy.patterns
 import ast
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from mypy.patterns import Pattern
+#import help_func
+from typing import TypeVar
 
 #import sys
 #import mypycustom
@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 
 # Lvalue = Union['NameExpr', 'MemberExpr', 'IndexExpr', 'SuperExpr', 'StarExpr','TupleExpr']; 
 Lvalue: mypy.nodes._TypeAlias = mypy.nodes.Expression
+Self = TypeVar("Self")
 
 # 構文木
-# Expressionはプロジェクションによりexpression -> str となって返ってくる。
 class Stmt:
     pass
 
@@ -42,13 +42,15 @@ class Block(Stmt): # list[stm]
         return f"{self.body}"
 
 class Pass(Stmt):
-    pass
+    def __repr__(self):
+        return f"pass"
+
 
 class Return(Stmt):
     def __init__(self, exp:str):
         self.expr = exp
 
-class Seq(Stmt): # e1; s
+class Es(Stmt): # e1; s
     def __init__(self, exp:str):
         self.expr = exp
     def __repr__(self):
@@ -147,25 +149,6 @@ class Assert(Stmt): # assert
     def __repr__(self):
         return f"assert {self.expr}"
 
-class ImportAll(Stmt):
-    #id: str
-    #relative: int
-    #imported_names: list[str]
-    def __init__(self,id:str,relative:int):#,imported_names: list[str]):
-        super().__init__()
-        self.id = id
-        self.relative = relative
-        #self.imported_names = []
-    def __repr__(self):
-        return f"from {self.id} import *"
-    #def __str__(self):
-    #    return f"from {self.id} import *"
-
-# listの[]を省略する関数 (list -> string)
-def list_to_str(list:list) -> str:
-    str_list = ''.join(str(x) for x in list)
-    return str_list
-
 
 
 #block
@@ -186,8 +169,8 @@ def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.Typ
                             isinstance(s.expr.callee,mypy.nodes.MemberExpr) and \
                                 s.expr.callee.name == "select":# enum型かつロールが合っているかつメソッド名がselectのとき
                 if len(s.expr.args) == 1:# args:list[expression] <- このリストの要素は一つしかあり得ない
-                    pro_args = pro_e.projection_exp(s.expr.args[0],r,tc)
-                    return [Match(pro_e.projection_exp(s.expr,r,tc),[pro_args],[Block(projection_block(s_list[1:],r,tc))])]
+                    pro_args = projection_exp(s.expr.args[0],r,tc)
+                    return [Match(projection_exp(s.expr,r,tc),[pro_args],[Block(projection_block(s_list[1:],r,tc))])]
                 else:
                     raise Exception
             else:
@@ -208,26 +191,26 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
     elif isinstance(s,mypy.nodes.ReturnStmt):
         if s.expr is None:
             raise Exception
-        exp = pro_e.projection_exp(s.expr,r,tc)
+        exp = projection_exp(s.expr,r,tc)
         return Return(exp) 
     #Assignment変更前
     #elif isinstance(s,mypy.nodes.AssignmentStmt):
     #    lv = s.lvalues
     #    lv_pro:list[str] = []
     #    for i in range(len(lv)):
-    #        l = pro_e.projection_exp(lv[i],r,tc)
+    #        l = projection_exp(lv[i],r,tc)
     #        lv_pro += [l] 
-    #        rvs = pro_e.projection_exp(s.rvalue,r,tc)
+    #        rvs = projection_exp(s.rvalue,r,tc)
     #        t = s.type
     #        if t is None and r in rolesOf(s.rvalue,tc):#型を明示していない場合（型推論で行う場合）
     #            return Asg(lv_pro,rvs,t)
     #        elif t is None and r not in rolesOf(s.rvalue,tc):
-    #            return Seq(rvs)
+    #            return Es(rvs)
     #        else:#型明示
     #            if r in rolesOf_t(t,tc): 
     #                return Asg(lv_pro,rvs,t) 
     #            else:
-    #                return Seq(rvs) 
+    #                return Es(rvs) 
     #    else:
     #        raise Exception
         
@@ -235,25 +218,25 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
     elif isinstance(s,mypy.nodes.AssignmentStmt):
         lv = s.lvalues
         if len(lv) == 1:
-            l = pro_e.projection_exp(lv[0],r,tc)
-            rvs = pro_e.projection_exp(s.rvalue,r,tc)
+            l = projection_exp(lv[0],r,tc)
+            rvs = projection_exp(s.rvalue,r,tc)
             t = s.type
             if t is None and r in rolesOf(s.rvalue,tc):#型を明示していない場合（型推論で行う場合）
                 return Asg(l,rvs,t)
             elif t is None and r not in rolesOf(s.rvalue,tc):
-                return Seq(rvs)
+                return Es(rvs)
             else:#型明示
                 if r in rolesOf_t(t,tc): 
                     return Asg(l,rvs,t) 
                 else:
-                    return Seq(rvs) 
+                    return Es(rvs) 
         else:
             raise Exception
         
     #OperatorAssignment
     elif isinstance(s,mypy.nodes.OperatorAssignmentStmt):
-        l = pro_e.projection_exp(s.lvalue,r,tc)
-        rv = pro_e.projection_exp(s.rvalue,r,tc)
+        l = projection_exp(s.lvalue,r,tc)
+        rv = projection_exp(s.rvalue,r,tc)
         return OpAsg(l,rv,s.op)
     #if
     elif isinstance(s,mypy.nodes.IfStmt):
@@ -261,7 +244,7 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         exprs_projected:list[str] = []
         bodies_projected:list[Block] = []
         for i in range(len(s.expr)):
-            exp = pro_e.projection_exp(s.expr[i],r,tc)
+            exp = projection_exp(s.expr[i],r,tc)
             stm = projection_block(s.body[i].body,r,tc)
             exprs_projected += [exp]
             bodies_projected += [Block(stm)]
@@ -269,52 +252,29 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
             raise Exception
         else_projected = projection_block(s.else_body.body,r,tc)
         return If(exprs_projected,bodies_projected,Block(else_projected))
-    #Seq
+    #Es
     elif isinstance(s,mypy.nodes.ExpressionStmt):
-        exp = pro_e.projection_exp(s.expr,r,tc)
-        return Seq(exp)
+        exp = projection_exp(s.expr,r,tc)
+        return Es(exp)
     #raise
     elif isinstance(s,mypy.nodes.RaiseStmt):
         if s.expr is None:
             raise Exception
-        exp = pro_e.projection_exp(s.expr,r,tc)
+        exp = projection_exp(s.expr,r,tc)
         return Raise(exp)
     #assert
     elif isinstance(s,mypy.nodes.AssertStmt):
-        exp = pro_e.projection_exp(s.expr,r,tc)
+        exp = projection_exp(s.expr,r,tc)
         return Assert(exp)
 
     #import
-    elif isinstance(s,mypy.nodes.ImportAll):
-        return ImportAll(s.id,s.relative)
+    #elif isinstance(s,mypy.nodes.ImportAll):
+    #    return ImportAll(s.id,s.relative)
     #others
     else:
         raise Exception("unexpected syntax",s)
 
     
-# rolesOf(e) -> str
-def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> set[str]:
-    t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
-    if isinstance(t0, mypy.types.Instance): #Expression → Instance
-        if t0.type.defn.name == "At":
-            roleName = set(str([t0.args[1]])) # At[int,A]でいうところのA
-            return roleName
-        else:
-            raise Exception
-    else:
-        raise Exception
-        
-# rolesOf(type) -> str
-def rolesOf_t(n:mypy.types.Type | None, typeChecker:mypy.checker.TypeChecker) -> set[str]:
-    print(n)
-    if isinstance(n,mypy.types.Instance):
-        if n.type.defn.name == "At":
-            roleName = set(str([n.args[1]])) # At[int,A]でいうところのA
-            return roleName
-        else:
-            raise Exception
-    else:
-        raise Exception
 
 def merge_exp(e1:str,e2:str) -> str:
     if e1 == e2:
@@ -350,7 +310,7 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
         else:
             raise Exception #merge(s1.stmt,s2.stmt)
     # e;s
-    elif isinstance(s1,Seq) and isinstance(s2,Seq):
+    elif isinstance(s1,Es) and isinstance(s2,Es):
         if s1.expr == s2.expr:
             return s1
         else:
@@ -369,7 +329,7 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
                 stm1 = s1.body[i]
                 stm2 = s2.body[i]
                 exps += [merge_exp(exp1,exp2)]
-                stms += [Block([merge(stm1,stm2)])]
+                stms += [Block([merge(normalize(stm1),normalize(stm2))])]
         return If(exps,stms,else_stm)
     # match
     elif isinstance(s1,Match) and isinstance(s2,Match):
@@ -428,13 +388,27 @@ def noop(exp:str):# 射影後のExpression(String型)
 
 #normalizing
 def normalize(s:Stmt) -> Stmt: 
-    if isinstance(s, Pass):
+    if isinstance(s, Pass): # pass
         return s
-    elif isinstance(s, Return):
+    elif isinstance(s, Return): # return 
         return s
-    elif isinstance(s, Seq):
+    elif isinstance(s, Es): # expressionStmt
         # ここでは stmt.expr が削る対象だったら s.stmt を return する
-        assert False # TODO
+        return Es("")
+    elif isinstance(s,OpAsg): # operator assignment
+        if noop(s.lvalue) == noop(s.rvalue) == "":
+            return OpAsg("","","")
+        elif noop(s.lvalue) == "" and noop(s.rvalue) != "":
+            return Es(s.rvalue)
+        elif noop(s.lvalue) != "" and noop(s.rvalue) == "":
+            return Es(s.lvalue)
+        else: # noop(s.lvalue) != "" and noop(s.rvalue) != "":
+            return s
+    #elif isinstance(s,If):
+    #elif isinstance(s,Match):
+
+
+        
     #elif isinstance(s,OpAsg):
     #    if noop(s.rvalue)
     # elif...

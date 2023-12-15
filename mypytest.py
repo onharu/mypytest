@@ -13,6 +13,7 @@ import mypy.type_visitor
 #import pro_e
 import pro_s
 import pro_class
+import projection
 
 # result <- ASTが保存されている
 result : mypy.build.BuildResult | None = mypycustom.main(["--show-traceback", 
@@ -30,11 +31,11 @@ if src.tree is None: # Noneを省く
     sys.exit(1)
     
 # projectionを読み込む
-#for stm in pro_s.projection_block(src.tree.defs,"A",typechecker):
-#    print(stm)
-
-for stm in pro_class.projection_class(src.tree.defs,"A",typechecker):
+for stm in projection.projection(src.tree.defs,"A",typechecker):
     print(stm)
+
+#for stm in pro_class.projection_class(src.tree.defs,"A",typechecker):
+#    print(stm)
 
 
 #print(pro_s.projection_block(src.tree.defs,"A",typechecker))
