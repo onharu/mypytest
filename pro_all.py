@@ -15,10 +15,10 @@ if TYPE_CHECKING:
 class Stmt:
     pass
 
-def projection(n:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker) -> list[Stmt]:
+def projection_all(n:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker) -> list[Stmt]:
     result:list[Stmt] = []
     for node in n:
-        print(node)
+        #print(node)
         if isinstance(node,mypy.nodes.Import) or isinstance(node,mypy.nodes.ImportFrom) or isinstance(node,mypy.nodes.ImportAll):
             result += [pro_md.projection_md(node)]
         elif isinstance(node,mypy.nodes.ClassDef):

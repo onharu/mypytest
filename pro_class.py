@@ -43,6 +43,7 @@ class ClassDef(Stmt):
 
 
 def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) -> ClassDef:
+    print("class!!")
     if "Ch1" in str(n.base_type_exprs[0]) or "Ch2" in str(n.base_type_exprs[0]) or "Ch3" in str(n.base_type_exprs[0]) and r in str(n.base_type_exprs[0]):
         exprs:list[str] = []
         for exp in n.base_type_exprs[1:]:

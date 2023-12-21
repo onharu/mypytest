@@ -84,6 +84,10 @@ _AwaitableT_co = TypeVar("_AwaitableT_co", bound=Awaitable[Any], covariant=True)
 class At(Generic[_T1,_T2],_T1):
     pass
 
+class Channel(Generic[_T1,_R1,_R2],_T1):
+    pass
+
+
 class Ch1(Generic[_R1]):
     pass
 class Ch2(Generic[_R1,_R2]):

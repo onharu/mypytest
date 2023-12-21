@@ -1,6 +1,6 @@
 import sys
 import mypycustom
-import mypy
+#import mypy
 import mypy.build
 import mypy.visitor
 import mypy.nodes
@@ -13,13 +13,15 @@ import mypy.type_visitor
 #import pro_e
 import pro_s
 import pro_class
-import projection
+import pro_all
 
 # result <- ASTが保存されている
-result : mypy.build.BuildResult | None = mypycustom.main(["--show-traceback", 
-                                                    #"--verbose",
-                                                    "--custom-typeshed", "./typeshed",
-                                                    "ex.py"])
+result : mypy.build.BuildResult | None = mypycustom.main([
+    "--show-traceback", 
+    #"--verbose",
+    "--custom-typeshed", "./typeshed",
+    "ex.py"
+    ])
 
 if result is None: # Noneを省く
     sys.exit(1)
@@ -29,9 +31,9 @@ typechecker = src.type_checker()
 
 if src.tree is None: # Noneを省く
     sys.exit(1)
-    
+
 # projectionを読み込む
-for stm in projection.projection(src.tree.defs,"A",typechecker):
+for stm in pro_all.projection_all(src.tree.defs,"A",typechecker):
     print(stm)
 
 #for stm in pro_class.projection_class(src.tree.defs,"A",typechecker):

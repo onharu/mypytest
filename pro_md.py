@@ -36,6 +36,7 @@ class ImportAll(Stmt):
         return f"from {self.id} import *"
     
 def projection_md(n:mypy.nodes.Statement) -> Stmt:
+    print("module!")
     if isinstance(n,mypy.nodes.Import):
         return Import(n.ids)
     elif isinstance(n,mypy.nodes.ImportFrom):

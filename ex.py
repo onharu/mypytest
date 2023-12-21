@@ -33,16 +33,21 @@
 #    KO = 2
 #from mypy import *
 from role import *
-
+#from builtins import *
 #from builtins import *
 #x:int
 #x = 1 + 1
 #import role
 class Conv(Ch2[A,B]):
-  def f(self,x:At[int,A]):
-    pass
+  def f(self,x:At[int,A],y:At[int,B]):
+    x = 123@A()
+    y = 100@B()
+    if x > 100@A():
+      return "()"@A()
+    else:
+      return "False"@A()
 
-#x = 123@A
+#x = 123@A()
 #
 #if x > 100@A: # (int@A > int@A)@boolになって欲しい
 #  assert 1

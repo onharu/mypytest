@@ -39,7 +39,9 @@ class Block(Stmt): # list[stm]
         # -> 今回は親クラスのStmtに__init__がないためなくても良い
         self.body = body
     def __repr__(self):
-        return f"{self.body}"
+        for stm in self.body:
+            return f"{stm}\n"
+        #return f"{self.body}"
 
 class Pass(Stmt):
     def __repr__(self):
@@ -49,6 +51,8 @@ class Pass(Stmt):
 class Return(Stmt):
     def __init__(self, exp:str):
         self.expr = exp
+    def __repr__(self):
+        return f"return {self.expr}"
 
 class Es(Stmt): # e1; s
     def __init__(self, exp:str):
@@ -85,7 +89,8 @@ class OpAsg(Stmt): # e1 Asgop e2; s
         self.rvalue = rv
         self.op = op
     def __repr__(self):
-        return f"{self.lvalue} {self.op} {self.rvalue}"
+        #return f"{self.lvalue} {self.op} {self.rvalue}"
+        return f"{normalize(self)}"
         
 class If(Stmt): # if e1:s1; else:s2; s
     def __init__(
@@ -153,6 +158,7 @@ class Assert(Stmt): # assert
 
 #block
 def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker)-> list[Stmt]:
+    print("block!")
     #for i in range(len(s_list)):
     if s_list == []:
         return []
@@ -184,6 +190,7 @@ def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.Typ
 
 # projection Statement（単一の文）
 def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> Stmt:
+    print("stm!")
     #Pass
     if isinstance(s,mypy.nodes.PassStmt):
         return Pass()
@@ -216,6 +223,7 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         
     #Assinment変更後
     elif isinstance(s,mypy.nodes.AssignmentStmt):
+        print("assign!")
         lv = s.lvalues
         if len(lv) == 1:
             l = projection_exp(lv[0],r,tc)
