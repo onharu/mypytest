@@ -6,7 +6,10 @@ import mypy.types
 from enum import Enum
 import mypy.type_visitor
 from pro_s import *
+#import pro_s
 from pro_all import *
+from data import *
+#import pro_all
 import mypy.patterns
 import help_func
 import ast
@@ -38,13 +41,13 @@ def projection_func(n:mypy.nodes.FuncDef,r:str,tc:mypy.checker.TypeChecker) -> F
         for arg in n.arguments:
             if arg.type_annotation is not None and r in help_func.rolesOf_t(arg.type_annotation,tc):
                 print(type(help_func.rolesOf_t(arg.type_annotation,tc)))
-                print("rolesOf_t = "+list_to_str(help_func.rolesOf_t(arg.type_annotation,tc)))
+                print("rolesOf_t = "+help_func.list_to_str(help_func.rolesOf_t(arg.type_annotation,tc)))
                 #print(arg.type_annotation)
                 #print(arg.variable.name)
                 args.append(arg.variable.name)
             elif arg.type_annotation is not None and r not in help_func.rolesOf_t(arg.type_annotation,tc):
                 print(type(help_func.rolesOf_t(arg.type_annotation,tc)))
-                print("rolesOf_t = "+list_to_str(help_func.rolesOf_t(arg.type_annotation,tc)))
+                print("rolesOf_t = "+help_func.list_to_str(help_func.rolesOf_t(arg.type_annotation,tc)))
                 args
             elif arg.type_annotation is None:
                 args.append(arg.variable.name)

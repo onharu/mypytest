@@ -11,9 +11,10 @@ import mypy.types
 import mypy.type_visitor
 #import help_func
 #import pro_e
-import pro_s
-import pro_class
-import pro_all
+#import pro_s
+#import pro_class
+#import pro_all
+import projection
 
 # result <- ASTが保存されている
 result : mypy.build.BuildResult | None = mypycustom.main([
@@ -33,8 +34,8 @@ if src.tree is None: # Noneを省く
     sys.exit(1)
 
 # projectionを読み込む
-for stm in pro_all.projection_all(src.tree.defs,"A",typechecker):
-    print(stm)
+for stm in projection.projection_all(src.tree.defs,"A",typechecker):
+    print(projection.stmt_to_string(stm,0))
 
 #for stm in pro_class.projection_class(src.tree.defs,"A",typechecker):
 #    print(stm)

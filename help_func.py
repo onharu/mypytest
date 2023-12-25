@@ -71,6 +71,14 @@ def list_to_str(list:list) -> str:
     str_list = ','.join(str(x) for x in list)
     return str_list
 
+
+# importからas部分をなくす
+def get(tlist:list[tuple[str,str|None]]) -> list[str]:
+    str_list:list[str] = []
+    for tuple in tlist:
+        str_list.append(tuple[0])
+    return str_list
+
 # merging
 # 同じstm,expはそのまま残す,後に続くStmも同じでないとマージされない
 def merge(s1:Stmt, s2:Stmt) -> Stmt: 
