@@ -22,10 +22,19 @@ def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) ->
         exprs:list[str] = []
         for exp in n.base_type_exprs[1:]:
             exprs += [(projection_exp(exp,r,tc))]
-        if type(n.defs.body[0]) == mypy.nodes.FuncDef: # definite function
-            return ClassDef(n.name,r,exprs,Block([projection_func(n.defs.body[0],r,tc)]+[projection_all(n.defs.body[1:],r,tc)],4))
-        else: # class定義のなかで式、文が初めに来るとき
-            return ClassDef(n.name,r,exprs,Block(projection_block(n.defs.body,r,tc),4))
+        #n.defs.body[0]からbodyの長さ分だけbodyの要素に対してそれぞれプロジェクションする　n.defs.body[i]に対してprojection_func
+        #プロジェクション後のbodyをリストでまとめてClassDefの要素としてとる
+        s_list:list[Stmt] = []
+        for stm in n.defs.body:
+            if isinstance(stm,mypy.nodes.FuncDef):
+                s_list.append(projection_func(stm,r,tc))
+            else:
+                raise Exception
+        return ClassDef(n.name,r,exprs,Block(s_list,4))
+        #if type(n.defs.body[0]) == mypy.nodes.FuncDef: # definite function
+        #    return ClassDef(n.name,r,exprs,Block([projection_func(n.defs.body[0],r,tc)]+[projection_all(n.defs.body[1:],r,tc)],4))
+        #else: # class定義のなかで式、文が初めに来るとき
+        #    return ClassDef(n.name,r,exprs,Block(projection_block(n.defs.body,r,tc),4))
     else:
         raise Exception
     # クラス定義

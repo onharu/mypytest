@@ -126,12 +126,14 @@ class ClassDef(Stmt):
         self.base_type_vars = base_type_vars
         self.defs = defs
 
+#Import文にasを使わない
+        
 class Import(Stmt):
-    def __init__(self,ids:list[tuple[str, str | None]]):
+    def __init__(self,ids:list[str]):
         self.ids = ids
 
 class ImportFrom(Stmt):
-    def __init__(self,id:str,relative:int,names:list[tuple[str, str | None]]):
+    def __init__(self,id:str,relative:int,names:list[str]):
         self.id = id
         self.relative = relative
         self.names = names
@@ -141,6 +143,8 @@ class ImportAll(Stmt):
         super().__init__()
         self.id = id
         self.relative = relative
+
+# If,Matchは別で
 
 def stmt_to_string(s:Stmt,indent:int) -> str:
     if isinstance(s,Pass):
@@ -157,28 +161,59 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
         return " "*indent + s.lvalues + " = " + s.rvalue
     elif isinstance(s,OpAsg):
         return " "*indent + s.lvalue + " " +s.op + " " + s.rvalue
-    elif isinstance(s,If):
-        return " " * indent + "if " + s.expr + ":\n" + \
-                stmt_to_string(s.body, indent+4) + \
-                " " * indent + "else:\n" +\
-                stmt_to_string(s.else_body, indent+4)
-    elif isinstance(s,Match):
-        return " "*indent + "match " + s.subject + ":\n" + \
-                " "*(indent+4) + "case " + s.patterns + ":\n" + \
-                stmt_to_string(s.bodies,indent+8)
+    #elif isinstance(s,If):
+    #    return " " * indent + "if " + s.expr + ":\n" + \
+    #            block_to_string(s.body, indent+4) + \
+    #            " " * indent + "else:\n" +\
+    #            stmt_to_string(s.else_body, indent+4)
+    #elif isinstance(s,Match):
+    #    return " "*indent + "match " + s.subject + ":\n" + \
+    #            " "*(indent+4) + "case " + s.patterns + ":\n" + \
+    #            stmt_to_string(s.bodies,indent+8)
     elif isinstance(s,FuncDef):
-        return " "*indent + "def " + s.name + "("+s.arguments+"):\n" + stmt_to_string(s.body,indent+4)
+        if s.arguments is not None:
+            return " "*indent + "def " + s.name + "("+ ",".join(s.arguments) +"):\n" + stmt_to_string(s.body,indent+4)
+        else:
+            return " "*indent + "def " + s.name + "():\n" + stmt_to_string(s.body,indent+4)
     elif isinstance(s,ClassDef):
-        return " "*indent + "class " + s.name + "_" + s.rolename + "(" + s.base_type_vars + "):\n" + s.defs
+        return " "*indent + "class " + s.name + "_" + s.rolename + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
     elif isinstance(s,Import):
-        return " "*indent + "import " + s.ids
+        return " "*indent + "import " + ",".join(s.ids)
     elif isinstance(s,ImportFrom):
-        return " "*indent + "from " + s.id + " import " + s.names
+        return " "*indent + "from " + s.id + " import " + ",".join(s.names)
     elif isinstance(s,ImportAll):
         return " "*indent + "from " + s.id + " *"
+    elif isinstance(s,Block):
+        return " "*indent + block_to_string(s,indent)
     else:
         assert False
 
+def block_to_string(s:Block,indent:int) -> str:
+    str_list:list[str] = []
+    for stm in s.body:
+        str_list.append(stmt_to_string(stm,indent))
+    return "\n".join(str_list)
+
+def if_to_string(s:If,indent:int) -> str:
+    assert len(s.expr) == len(s.body)
+    #if
+    str_if = " "*indent + s.expr[0] + ":\n" + stmt_to_string(s.body[0],indent+4)
+    #elif
+    str_elif_list:list[str] = []
+    for i in range(len(s.expr[1:])):
+        str_elif_list.append(" "*indent + s.expr[i]+ ":\n" + stmt_to_string(s.body[i],indent+4))
+    str_elif = "\n".join(str_elif_list)
+    #else
+    str_else = " "*indent + "else:\n" + stmt_to_string(s.else_body,indent+4)
+    return "\n".join([str_if,str_elif,str_else])
+
+def match_to_string(s:Match,indent:int) -> str:
+    assert len(s.patterns) == len(s.bodies)
+    case_and_body_list = []
+    for i in range(len(s.patterns)):
+        case_and_body_list.append(" "*(indent+4) + "case " + s.patterns[i] + ":\n" + stmt_to_string(s.bodies[i],indent+8))
+    case_and_body = "\n".join(case_and_body_list)
+    return " "*indent + "match " + s.subject + ":\n" + case_and_body
 
 
 def projection_all(n:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker) -> list[Stmt]:
@@ -192,7 +227,7 @@ def projection_all(n:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecke
         elif isinstance(node,mypy.nodes.FuncDef):
             result += [pro_func.projection_func(node,r,tc)]
         elif isinstance(node,mypy.nodes.Block):
-            result += [pro_s.projection_block(node.body,r,tc)]
+            result += pro_s.projection_block(node.body,r,tc)
         else:
             result += [pro_s.projection_stm(node,r,tc)]
     return result
