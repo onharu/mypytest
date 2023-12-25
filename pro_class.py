@@ -8,39 +8,13 @@ import mypy.type_visitor
 from pro_e import *
 from pro_s import *
 from pro_func import *
+from pro_all import *
 import help_func
 import mypy.patterns
 import ast
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from mypy.patterns import Pattern
-
-class Stmt:
-    pass
-
-class Block(Stmt): # list[stm]
-    def __init__(self, body:list[Stmt]):
-        self.body = body
-    def __repr__(self):
-        return f"{self.body}"
-
-class ClassDef(Stmt):
-    def __init__(
-            self,
-            name:str,
-            rolename:str,
-            base_type_vars:list[str],
-            #type_vars:Ch1 | Ch2 | Ch3 | None,
-            defs: Block
-    ):
-        self.name = name
-        self.rolename = rolename
-        self.base_type_vars = base_type_vars
-        self.defs = defs
-    def __repr__(self):
-        return f"class {self.name}_{self.rolename}({help_func.list_to_str(self.base_type_vars)}): \n   {self.defs}"
-    #def __repr__(self):
-
 
 def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) -> ClassDef:
     print("class!!")
@@ -49,9 +23,9 @@ def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) ->
         for exp in n.base_type_exprs[1:]:
             exprs += [(projection_exp(exp,r,tc))]
         if type(n.defs.body[0]) == mypy.nodes.FuncDef: # definite function
-            return ClassDef(n.name,r,exprs,projection_func(n.defs.body[0],r,tc))
+            return ClassDef(n.name,r,exprs,Block([projection_func(n.defs.body[0],r,tc)]+[projection_all(n.defs.body[1:],r,tc)],4))
         else: # class定義のなかで式、文が初めに来るとき
-            return ClassDef(n.name,r,exprs,projection_block(n.defs.body,r,tc))
+            return ClassDef(n.name,r,exprs,Block(projection_block(n.defs.body,r,tc),4))
     else:
         raise Exception
     # クラス定義
