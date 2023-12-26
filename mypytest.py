@@ -34,7 +34,7 @@ if src.tree is None: # Noneを省く
     sys.exit(1)
 
 # projectionを読み込む
-for stm in projection.projection_all(src.tree.defs,"A",typechecker):
+for stm in projection.projection_all(src.tree.defs,"C",typechecker):
     print(projection.stmt_to_string(stm,0))
 
 #for stm in pro_class.projection_class(src.tree.defs,"A",typechecker):

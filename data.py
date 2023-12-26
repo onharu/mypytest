@@ -4,6 +4,7 @@ import mypy.nodes
 import mypy.checker
 import mypy.types
 import mypy.type_visitor
+import projection
 # 構文木
 class Stmt:
     pass
@@ -43,6 +44,11 @@ class Es(Stmt): # e1; s
     def __init__(self, exp:str):
         self.expr = exp
 
+class Es2(Stmt): #e;stm1 stm2; stm
+    def __init__(self, exp:str, stmt:Stmt):
+        self.expr = exp
+        self.stmt = stmt
+
 class Asg(Stmt): # id:TE = e; s
     def __init__(
             self, 
@@ -66,17 +72,30 @@ class OpAsg(Stmt): # e1 Asgop e2; s
         self.rvalue = rv
         self.op = op
         
-class If(Stmt): # if e1:s1; else:s2; s
+#class If(Stmt): # if e1:s1; else:s2; s
+#    def __init__(
+#            self, 
+#            exp:list[str], 
+#            body:list[Block], 
+#            else_body:Block, 
+#            
+#            ):
+#        self.expr = exp
+#        self.body = body
+#        self.else_body = else_body
+        
+# If (if,elseのみ)
+class If(Stmt):
     def __init__(
             self, 
-            exp:list[str], 
-            body:list[Block], 
+            exp:str, 
+            body:Block, 
             else_body:Block, 
             
             ):
         self.expr = exp
         self.body = body
-        self.else_body = else_body
+        self.else_body = else_body  
 
 class Match(Stmt): # match
     def __init__(
@@ -149,6 +168,11 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
         return " "*indent + "return " + s.expr
     elif isinstance(s,Es):
         return " "*indent + s.expr
+    elif isinstance(s,Es2):
+        if "Unit.id" in s.expr:
+            return " "*indent + stmt_to_string(s.stmt,0)
+        else:
+            return " "*indent + s.expr + "\n" + stmt_to_string(s.stmt,indent)
     elif isinstance(s,Asg):
         return " "*indent + s.lvalues + " = " + s.rvalue
     elif isinstance(s,OpAsg):
@@ -169,7 +193,7 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
     elif isinstance(s,ImportFrom):
         return " "*indent + "from " + s.id + " import " + ",".join(s.names)
     elif isinstance(s,ImportAll):
-        return " "*indent + "from " + s.id + " *"
+        return " "*indent + "from " + s.id + " import *"
     elif isinstance(s,Block):
         return block_to_string(s,indent)
     else:
@@ -184,20 +208,15 @@ def block_to_string(s:Block,indent:int) -> str:
 def if_to_string(s:If,indent:int) -> str:
     #print("if_to_string")
     #print(len(s.expr[1:]))
-    assert len(s.expr) == len(s.body)
-    #if
-    str_if_list:list[str] = []
-    for i in range(len(s.expr)):
-        str_if_list.append(" "*indent + "if "+s.expr[i]+ ":\n" + stmt_to_string(s.body[i],indent+4))
-    str_if = "\n".join(str_if_list)
-    ##if
-    #str_if = " "*indent + "if " +s.expr[0] + ":\n" + stmt_to_string(s.body[0],indent+4)
-    ##elif
-    #str_elif_list:list[str] = []
-    #for i in range(len(s.expr[1:])):
-    #    str_elif_list.append(" "*indent + "elif: "+s.expr[i]+ ":\n" + stmt_to_string(s.body[i],indent+4))
-    #str_elif = "\n".join(str_elif_list)
-    #else
+
+    # if (elif version)
+    #assert len(s.expr) == len(s.body)
+    #str_if_list:list[str] = []
+    #for i in range(len(s.expr)):
+    #    str_if_list.append(" "*indent + "if "+s.expr[i]+ ":\n" + stmt_to_string(s.body[i],indent+4))
+    #str_if = "\n".join(str_if_list)
+
+    str_if = " "*indent + "if " + s.expr + ":\n" + stmt_to_string(s.body,indent+4)
     str_else = " "*indent + "else:\n" + stmt_to_string(s.else_body,indent+4)
     return "\n".join([str_if,str_else])
 

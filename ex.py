@@ -44,8 +44,6 @@ class Conv(Ch2[A,B]):
     y = 100@B()
     if x > 100@A():
       return "a"@A()
-    elif x <= 50@A():
-      return "b"@A()
     else:
       return "False"@A()
 

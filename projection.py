@@ -62,10 +62,6 @@ def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) ->
             else:
                 raise Exception
         return ClassDef(n.name,r,exprs,Block(s_list,4))
-        #if type(n.defs.body[0]) == mypy.nodes.FuncDef: # definite function
-        #    return ClassDef(n.name,r,exprs,Block([projection_func(n.defs.body[0],r,tc)]+[projection_all(n.defs.body[1:],r,tc)],2))
-        #else: # class定義のなかで式、文が初めに来るとき
-        #    return ClassDef(n.name,r,exprs,Block(projection_block(n.defs.body,r,tc),2))
     else:
         raise Exception
     
@@ -93,10 +89,6 @@ def projection_func(n:mypy.nodes.FuncDef,r:str,tc:mypy.checker.TypeChecker) -> F
         return FuncDef(n.name,args,Block(projection_block(n.body.body,r,tc),4))
     else:
         return FuncDef(n.name,[],Block(projection_block(n.body.body,r,tc),4))
-    
-            
-    # list[Argument]じゃなくてlist[Expression]にしたい　→　どうすればいいか？
-    #　xの型推論の結果からroleをとる
 
    
 
@@ -128,16 +120,14 @@ def projection_block(s_list:list[mypy.nodes.Statement],r:str,tc:mypy.checker.Typ
         else:# 分岐がない単一の文
             #print(s)
             return [projection_stm(s,r,tc)] + projection_block(s_list[1:],r,tc) # それぞれの文をプロジェクションする
-    #assert False
-
 
 
 # Statement（単一の文）
 def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> Stmt:
     #print("stm!")
-    #Pass
     if isinstance(s,mypy.nodes.PassStmt):
         return Pass()
+    
     #Return
     elif isinstance(s,mypy.nodes.ReturnStmt):
         if s.expr is None:
@@ -171,19 +161,52 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         rv = projection_exp(s.rvalue,r,tc)
         return OpAsg(l,rv,s.op)
     #if
+    #elif isinstance(s,mypy.nodes.IfStmt):
+    #    #assert len(s.expr)==len(s.body)
+    #    exprs_projected:list[str] = []
+    #    bodies_projected:list[Block] = []
+    #    for i in range(len(s.expr)):
+    #        exp = projection_exp(s.expr[i],r,tc)
+    #        stm = projection_block(s.body[i].body,r,tc)
+    #        exprs_projected += [exp]
+    #        bodies_projected += [Block(stm,4)]
+    #    if s.else_body is None:
+    #        raise Exception
+    #    else_projected = projection_block(s.else_body.body,r,tc)
+    #    return If(exprs_projected,bodies_projected,Block(else_projected,4))
     elif isinstance(s,mypy.nodes.IfStmt):
-        #assert len(s.expr)==len(s.body)
-        exprs_projected:list[str] = []
-        bodies_projected:list[Block] = []
-        for i in range(len(s.expr)):
-            exp = projection_exp(s.expr[i],r,tc)
-            stm = projection_block(s.body[i].body,r,tc)
-            exprs_projected += [exp]
-            bodies_projected += [Block(stm,4)]
+        #print(type(s.expr[0]))
+        #if r in help_func.rolesOf(s.expr[0],tc):
+        #    exp = projection_exp(s.expr[0],r,tc)
+        #    stm = projection_block(s.body[0].body,r,tc)
+        #    if s.else_body is None:
+        #      raise Exception
+        #    else_projected = projection_block(s.else_body.body,r,tc)
+        #    return If(exp,Block(stm,4),Block(else_projected,4))
+        #else:
+        #    exp = projection_exp(s.expr[0],r,tc)
+        #    stm = projection_block(s.body[0].body,r,tc)
+        #    if s.else_body is None:
+        #      raise Exception
+        #    else_projected = projection_block(s.else_body.body,r,tc)
+        #    stm1 = help_func.normalize(Block(stm,4))
+        #    stm2 = help_func.normalize(Block(else_projected,4))
+        #    return Es2(exp,help_func.merge(stm1,stm2))
+        exp = projection_exp(s.expr[0],r,tc)
+        stm = projection_block(s.body[0].body,r,tc)
         if s.else_body is None:
-            raise Exception
+          raise Exception
         else_projected = projection_block(s.else_body.body,r,tc)
-        return If(exprs_projected,bodies_projected,Block(else_projected,4))
+        if "Unit.id" in exp:
+            print("exp = " + exp)
+            stm1 = help_func.normalize(Block(stm,4))
+            stm2 = help_func.normalize(Block(else_projected,4))
+            return Es2(exp,help_func.merge(stm1,stm2))
+        else:
+            return If(exp,Block(stm,4),Block(else_projected,4))
+            
+            
+
     #Es
     elif isinstance(s,mypy.nodes.ExpressionStmt):
         exp = projection_exp(s.expr,r,tc)
@@ -203,6 +226,9 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         raise Exception("unexpected syntax",s)
     
 
+
+
+
 # Expression    
 def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) -> str:
     #literal(role付き)
@@ -211,7 +237,8 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
         if n.op == "@":
             #print(n)
             if isinstance(n.left,mypy.nodes.IntExpr) or isinstance(n.left,mypy.nodes.FloatExpr) or isinstance(n.left,mypy.nodes.StrExpr): # 1@A
-                #print(n.right)
+                #print("right of e@R = "+str(n.right))
+                #print("rolename = "+ help_func.nameExpr(n.right))
                 if help_func.nameExpr(n.right) == r:
                     return str(n.left.value)
                 else:
@@ -283,7 +310,7 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
         #print("type :" + str(type(n.callee)))
         elif isinstance(n.callee, mypy.nodes.IndexExpr):
             exp_list = []
-            print('type: ' + str(type(n.callee.index)))
+            #print('type: ' + str(type(n.callee.index)))
             #if isinstance(n.callee.index,mypy.nodes.NameExpr):
             if r == help_func.nameExpr(n.callee.index):
                 for exp_i in n.args:

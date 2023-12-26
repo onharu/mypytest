@@ -9,6 +9,6 @@ class B(Role):
     def __matmul__(self, x): # @ を使えるようにする
         pass
 
-class C(Role):
+class E(Role):
     def __matmul__(self, x): # @ を使えるようにする
         pass

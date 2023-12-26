@@ -53,10 +53,11 @@ def rolesOf_t(n:mypy.types.Type | None, typeChecker:mypy.checker.TypeChecker) ->
 # 構文木の情報から値だけを取り出す関数nameExpr
 def nameExpr(e:mypy.nodes.Expression) -> str:
     if isinstance(e,mypy.nodes.NameExpr):
+        print("e.name = " + e.name)
         return e.name
     elif isinstance(e,mypy.nodes.CallExpr):
-        #print(e.callee)
-        return str(e.callee)
+        print("e.callee = "+str(e.callee))
+        return nameExpr(e.callee)
     else:
         raise Exception
     
@@ -114,20 +115,23 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
             raise Exception
     # if
     elif isinstance(s1,If) and isinstance(s2,If):
-        exps:list[str] = []
-        stms:list[Block] = []
-        assert len(s1.expr) == len(s2.expr) and len(s1.expr) == len(s1.body) and len(s2.expr) == len(s2.body)# if文に直す
+        #exps:list[str] = []
+        #stms:list[Block] = []
+        assert len(s1.expr) == len(s2.expr)# if文に直す
         if len(s1.expr) == 0:
-            else_stm = Block([merge(s1.else_body,s2.else_body)],2)
+            else_stm = Block([merge(s1.else_body,s2.else_body)],4)
         else:# len(s1.expr) != 0
-            for i in range(len(s1.expr)):
-                exp1 = s1.expr[i]
-                exp2 = s2.expr[i]
-                stm1 = s1.body[i]
-                stm2 = s2.body[i]
-                exps += [merge_exp(exp1,exp2)]
-                stms += [Block([merge(normalize(stm1),normalize(stm2))],2)]
-        return If(exps,stms,else_stm)
+            #for i in range(len(s1.expr)):
+            #    exp1 = s1.expr[i]
+            #    exp2 = s2.expr[i]
+            #    stm1 = s1.body[i]
+            #    stm2 = s2.body[i]
+            #    exps += [merge_exp(exp1,exp2)]
+            #    stms += [Block([merge(normalize(stm1),normalize(stm2))],4)]
+            stm1 = s1.body.body[0]
+            stm2 = s2.body.body[0]
+            stms = Block([merge(normalize(stm1),normalize(stm2))],4)
+        return If(s1.expr,stms,else_stm)
     # match
     elif isinstance(s1,Match) and isinstance(s2,Match):
         # guards:list[expression]
@@ -191,6 +195,7 @@ def normalize(s:Stmt) -> Stmt:
         # ここでは stmt.expr が削る対象だったら s.stmt を return する
         return Es("")
     elif isinstance(s,OpAsg): # operator assignment
+        print("get")
         if noop(s.lvalue) == noop(s.rvalue) == "":
             return OpAsg("","","")
         elif noop(s.lvalue) == "" and noop(s.rvalue) != "":
@@ -199,11 +204,10 @@ def normalize(s:Stmt) -> Stmt:
             return Es(s.lvalue)
         else: # noop(s.lvalue) != "" and noop(s.rvalue) != "":
             return s
+    elif isinstance(s,Block):
+        return normalize(s.body[0])
     #elif isinstance(s,If):
     #elif isinstance(s,Match):
-
-
-        
     #elif isinstance(s,OpAsg):
     #    if noop(s.rvalue)
     # elif...
