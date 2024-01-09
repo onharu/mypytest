@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from mypy.patterns import Pattern
 
 
+
+
 #Projection
 def projection_all(n:list[mypy.nodes.Statement],r:str,tc:mypy.checker.TypeChecker) -> list[Stmt]:
     result:list[Stmt] = []
@@ -68,7 +70,7 @@ def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) ->
 
 
 def projection_func(n:mypy.nodes.FuncDef,r:str,tc:mypy.checker.TypeChecker) -> FuncDef:
-    #print("def!")
+    print("def!")
     args:list[str] = []
     if len(n.arguments) != 0:
         for arg in n.arguments:
@@ -137,7 +139,7 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
     
     #Assinment
     elif isinstance(s,mypy.nodes.AssignmentStmt):
-        #print("assign!")
+        print("assign!")
         lv = s.lvalues
         if len(lv) == 1:
             l = projection_exp(lv[0],r,tc)
@@ -268,6 +270,11 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
             return left+n.operators[0]+right
         else:
             raise Exception
+    #field
+    elif isinstance(n,mypy.nodes.MemberExpr):
+        #print("member")
+        #print(n.expr)
+        return projection_exp(n.expr,r,tc)+"."+n.name
     #関数呼び出し、メソッド呼び出し、クラス定義
     elif isinstance(n, mypy.nodes.CallExpr):
         #関数 f = variable
@@ -310,20 +317,44 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
         #print("type :" + str(type(n.callee)))
         elif isinstance(n.callee, mypy.nodes.IndexExpr):
             exp_list = []
-            #print('type: ' + str(type(n.callee.index)))
-            #if isinstance(n.callee.index,mypy.nodes.NameExpr):
-            if r == help_func.nameExpr(n.callee.index):
-                for exp_i in n.args:
-                    exp_list.append(projection_exp(exp_i ,r,tc))
-                exp_var = ','.join(exp_list)
-                return help_func.nameExpr(n.callee.base) + "_" + r + "(" + exp_var + ")"
-            else: # R not in Roles
-                for exp_i in n.args:
-                    exp_list.append(projection_exp(exp_i ,r,tc))
-                exp_var = ','.join(exp_list)
-                return "Unit.id(" + exp_var + ")" 
+            id_list = []
+            #print('type: ' + str(n.callee.index))
+            if isinstance(n.callee.index,mypy.nodes.TupleExpr):
+                for id in n.callee.index.items:
+                    id_list.append(projection_exp(id,r,tc))
+                ids = ",".join(id_list)
+                ids = help_func.list_to_str(n.callee.index.items)
+                print(ids)
+                if r in ids:#== help_func.nameExpr(n.callee.index):
+                    for exp_i in n.args:
+                        exp_list.append(projection_exp(exp_i ,r,tc))
+                    exp_var = ','.join(exp_list)
+                    return help_func.nameExpr(n.callee.base) + "[" + ids + "](" + exp_var + ")"
+                else: # R not in Roles
+                    for exp_i in n.args:
+                        exp_list.append(projection_exp(exp_i ,r,tc))
+                    exp_var = ','.join(exp_list)
+                    return "Unit.id(" + exp_var + ")" 
+            else:
+                raise Exception
         else:
             raise Exception
+        #elif isinstance(n.callee, mypy.nodes.IndexExpr):
+        #    exp_list = []
+        #    print('type: ' + str(n.callee.index))
+        #    #if isinstance(n.callee.index,mypy.nodes.NameExpr):
+        #    if r == help_func.nameExpr(n.callee.index):
+        #        for exp_i in n.args:
+        #            exp_list.append(projection_exp(exp_i ,r,tc))
+        #        exp_var = ','.join(exp_list)
+        #        return help_func.nameExpr(n.callee.base) + "_" + r + "(" + exp_var + ")"
+        #    else: # R not in Roles
+        #        for exp_i in n.args:
+        #            exp_list.append(projection_exp(exp_i ,r,tc))
+        #        exp_var = ','.join(exp_list)
+        #        return "Unit.id(" + exp_var + ")" 
+        #else:
+        #    raise Exception
     elif isinstance(n,mypy.nodes.NameExpr):
         return n.name
     elif isinstance(n,mypy.nodes.IntExpr):

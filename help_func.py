@@ -1,14 +1,11 @@
 ## 補助関数の集合ファイル
-
-import sys
-import mypycustom
 import mypy
 import mypy.visitor
 import mypy.nodes
 import mypy.checker
 import mypy.types
 import mypy.type_visitor
-from pro_all import *
+from projection import *
 
 def get_typename(t:mypy.types.Type) -> str:
     if isinstance(t,mypy.types.Instance):
@@ -56,7 +53,7 @@ def nameExpr(e:mypy.nodes.Expression) -> str:
         print("e.name = " + e.name)
         return e.name
     elif isinstance(e,mypy.nodes.CallExpr):
-        print("e.callee = "+str(e.callee))
+        #print("e.callee = "+str(e.callee))
         return nameExpr(e.callee)
     else:
         raise Exception
