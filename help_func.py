@@ -8,9 +8,12 @@ import mypy.type_visitor
 from projection import *
 
 def get_typename(t:mypy.types.Type) -> str:
+    #print(type(t))
     if isinstance(t,mypy.types.Instance):
+        #print("t.name = " +t.type.defn.name)
         return t.type.defn.name
     elif isinstance(t,mypy.types.UnboundType):
+        #print("t.name = " + t.name)
         return t.name
     else:
         raise Exception
@@ -26,6 +29,7 @@ def get_typearg(t:mypy.types.ProperType,i:int) -> str:
 # rolesOf(e) -> str
 def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> list[str]:
     t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
+    print(t0)
     if isinstance(t0,mypy.types.ProperType):
         if get_typename(t0) == "At":
             return [get_typearg(t0,1)]

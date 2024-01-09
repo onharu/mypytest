@@ -45,7 +45,8 @@ class Conv(Ch2[A,B]):
 
   def f(self,x:At[int,A]):
     x = 123@A()
-    self.chAB.com(123@A())
+    y = self.chAB.com(x)
+    return y
     #if x > 100@A():
     #  return "a"@A()
     #else:
