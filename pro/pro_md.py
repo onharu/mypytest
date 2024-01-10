@@ -5,7 +5,7 @@ import mypy.checker
 import mypy.types
 from enum import Enum
 import mypy.type_visitor
-from pro_all import *
+from pro.pro_all import *
 import mypy.patterns
 import ast
 from typing import TypeVar

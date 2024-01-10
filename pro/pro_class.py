@@ -5,10 +5,10 @@ import mypy.checker
 import mypy.types
 from enum import Enum
 import mypy.type_visitor
-from pro_e import *
-from pro_s import *
-from pro_func import *
-from pro_all import *
+from pro.pro_e import *
+from pro.pro_s import *
+from pro.pro_func import *
+from pro.pro_all import *
 import help_func
 import mypy.patterns
 import ast

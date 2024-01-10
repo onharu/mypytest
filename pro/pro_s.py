@@ -5,9 +5,9 @@ import mypy.checker
 import mypy.types
 from enum import Enum
 import mypy.type_visitor
-from pro_e import *
+from pro.pro_e import *
 from help_func import *
-from pro_all import *
+from pro.pro_all import *
 import mypy.patterns
 from typing import TypeVar
 # Lvalue = Union['NameExpr', 'MemberExpr', 'IndexExpr', 'SuperExpr', 'StarExpr','TupleExpr']; 

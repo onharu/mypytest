@@ -1,3 +1,4 @@
+from mypy import *
 import mypy
 import mypy.visitor
 import mypy.nodes

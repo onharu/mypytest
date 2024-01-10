@@ -6,7 +6,7 @@ import mypy.types
 from enum import Enum
 import mypy.type_visitor
 from data import *
-import pro_e,pro_s,pro_class,pro_func,pro_md
+import pro.pro_e as pro_e,pro.pro_s as pro_s,pro.pro_class as pro_class,pro.pro_func as pro_func,pro.pro_md as pro_md
 import mypy.patterns
 import ast
 from typing import TYPE_CHECKING

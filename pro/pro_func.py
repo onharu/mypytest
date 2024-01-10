@@ -5,9 +5,9 @@ import mypy.checker
 import mypy.types
 from enum import Enum
 import mypy.type_visitor
-from pro_s import *
+from pro.pro_s import *
 #import pro_s
-from pro_all import *
+from pro.pro_all import *
 from data import *
 #import pro_all
 import mypy.patterns
