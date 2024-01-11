@@ -9,12 +9,9 @@ from projection import *
 import help_func
 
 def get_typename(t:mypy.types.Type) -> str:
-    #print(type(t))
     if isinstance(t,mypy.types.Instance):
-        #print("t.name = " +t.type.defn.name)
         return t.type.defn.name
     elif isinstance(t,mypy.types.UnboundType):
-        #print("t.name = " + t.name)
         return t.name
     else:
         raise Exception
@@ -30,8 +27,6 @@ def get_typearg(t:mypy.types.ProperType,i:int) -> str:
 # rolesOf(e) -> str
 def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> list[str]:
     t0 = help_func.get_type(typeChecker, n)
-    # t0 = n.accept(typeChecker.expr_checker) #nの型情報を取得する
-    print(t0)
     if isinstance(t0,mypy.types.ProperType):
         if get_typename(t0) == "At":
             return [get_typearg(t0,1)]
@@ -56,10 +51,8 @@ def rolesOf_t(n:mypy.types.Type | None, typeChecker:mypy.checker.TypeChecker) ->
 # 構文木の情報から値だけを取り出す関数nameExpr
 def nameExpr(e:mypy.nodes.Expression) -> str:
     if isinstance(e,mypy.nodes.NameExpr):
-        print("e.name = " + e.name)
         return e.name
     elif isinstance(e,mypy.nodes.CallExpr):
-        #print("e.callee = "+str(e.callee))
         return nameExpr(e.callee)
     else:
         raise Exception
@@ -118,27 +111,16 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
             raise Exception
     # if
     elif isinstance(s1,If) and isinstance(s2,If):
-        #exps:list[str] = []
-        #stms:list[Block] = []
         assert len(s1.expr) == len(s2.expr)# if文に直す
         if len(s1.expr) == 0:
             else_stm = Block([merge(s1.else_body,s2.else_body)],4)
         else:# len(s1.expr) != 0
-            #for i in range(len(s1.expr)):
-            #    exp1 = s1.expr[i]
-            #    exp2 = s2.expr[i]
-            #    stm1 = s1.body[i]
-            #    stm2 = s2.body[i]
-            #    exps += [merge_exp(exp1,exp2)]
-            #    stms += [Block([merge(normalize(stm1),normalize(stm2))],4)]
             stm1 = s1.body.body[0]
             stm2 = s2.body.body[0]
             stms = Block([merge(normalize(stm1),normalize(stm2))],4)
         return If(s1.expr,stms,else_stm)
     # match
     elif isinstance(s1,Match) and isinstance(s2,Match):
-        # guards:list[expression]
-        # bodies: list[statement]
         # guardsが被ったらbodiesをマージして、被ってないならlistに加える
         # -> 新たなguards,bodiesとして定義し直せばいい
         if s1.subject == s2.subject:
@@ -179,7 +161,6 @@ def merge_exp(e1:str,e2:str) -> str:
         return e1
     else:
         raise Exception
-    
 
 # Noop
 def noop(exp:str):# 射影後のExpression(String型)
@@ -195,10 +176,8 @@ def normalize(s:Stmt) -> Stmt:
     elif isinstance(s, Return): # return 
         return s
     elif isinstance(s, Es): # expressionStmt
-        # ここでは stmt.expr が削る対象だったら s.stmt を return する
         return Es("")
     elif isinstance(s,OpAsg): # operator assignment
-        print("get")
         if noop(s.lvalue) == noop(s.rvalue) == "":
             return OpAsg("","","")
         elif noop(s.lvalue) == "" and noop(s.rvalue) != "":

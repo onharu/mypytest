@@ -1,5 +1,5 @@
 {
   "python.analysis.typeshedPaths": [
-    "/Users/onda/example-integrating-mypy/typeshed"
+    "/Users/onda/mypy/mypy/typeshed"
   ]
 }

@@ -189,11 +189,11 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
     elif isinstance(s,ClassDef):
         return " "*indent + "class " + s.name + "_" + s.rolename + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
     elif isinstance(s,Import):
-        return " "*indent + "import " + ",".join(s.ids)
+        return " "*indent + "import " + ",".join(s.ids) + "\n"
     elif isinstance(s,ImportFrom):
-        return " "*indent + "from " + s.id + " import " + ",".join(s.names)
+        return " "*indent + "from " + s.id + " import " + ",".join(s.names) + "\n"
     elif isinstance(s,ImportAll):
-        return " "*indent + "from " + s.id + " import *"
+        return " "*indent + "from " + s.id + " import *\n"
     elif isinstance(s,Block):
         return block_to_string(s,indent)
     else:
