@@ -1,8 +1,8 @@
+from pychoral import *
 from role import *
-from builtins import *
 class Conv_B():
     def __init__(self):
         self.chAB = Channel[int,A,B]()
-    def f(self):
-        Unit.id
+    def f(self,b):
+        
         return self.chAB.com(Unit.id)

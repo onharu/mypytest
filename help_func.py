@@ -8,6 +8,13 @@ import mypy.type_visitor
 from projection import *
 import help_func
 
+def get_type(tc:mypy.checker.TypeChecker, expr:mypy.nodes.Expression) -> mypy.types.Type :
+    try:
+        return tc.lookup_type(expr)
+    except KeyError as e:
+        print("type not known:" + str(expr))
+        raise e
+
 def get_typename(t:mypy.types.Type) -> str:
     if isinstance(t,mypy.types.Instance):
         return t.type.defn.name
@@ -93,10 +100,12 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
         #return merge_list    
     # return
     elif isinstance(s1,Return) and isinstance(s2,Return):
+        print(stmt_to_string(s1,0))
+        print(stmt_to_string(s2,0))
         if s1.expr == s2.expr:
             return s1
         else:
-            raise Exception
+            raise Exception()
     # AsgOp
     elif isinstance(s1,OpAsg) and isinstance(s2,OpAsg):
         if s1.lvalue == s2.lvalue and s1.rvalue == s2.rvalue:
@@ -170,14 +179,34 @@ def noop(exp:str):# 射影後のExpression(String型)
         return exp # そのまま値を返す
 
 #normalizing
+def normalize_block(s_list:list[Stmt]) -> list[Stmt]:
+    normalized_list:list[Stmt] = []
+    for s in s_list:
+        normalized_stm = normalize(s)
+        if  normalized_stm in [Es(""),OpAsg("","","")]:
+            pass
+        else:
+            normalized_list.append(normalized_stm)
+    if normalized_list == []:
+        return [Pass()]
+    else:
+        #print(normalized_list)
+        return normalized_list
+
 def normalize(s:Stmt) -> Stmt: 
     if isinstance(s, Pass): # pass
         return s
     elif isinstance(s, Return): # return 
         return s
     elif isinstance(s, Es): # expressionStmt
-        return Es("")
+        return Es(noop(s.expr))
+    elif isinstance(s,Es2):
+        return Es2(s.expr,s.stmt)
+    elif isinstance(s,Asg):
+        #print("asg")
+        return Asg(s.lvalues,s.rvalue,s.type)
     elif isinstance(s,OpAsg): # operator assignment
+        #print("opasg")
         if noop(s.lvalue) == noop(s.rvalue) == "":
             return OpAsg("","","")
         elif noop(s.lvalue) == "" and noop(s.rvalue) != "":
@@ -187,18 +216,28 @@ def normalize(s:Stmt) -> Stmt:
         else: # noop(s.lvalue) != "" and noop(s.rvalue) != "":
             return s
     elif isinstance(s,Block):
-        return normalize(s.body[0])
-    #elif isinstance(s,If):
+        return Block(normalize_block(s.body),0)
+    elif isinstance(s,If):
+        return If(s.expr,Block(normalize_block(s.body.body),0),Block(normalize_block(s.else_body.body),0))
     #elif isinstance(s,Match):
+    #    return Match(s.subject,s.patterns,)
     #elif isinstance(s,OpAsg):
     #    if noop(s.rvalue)
     # elif...
-    assert False
-
-
-def get_type(tc:mypy.checker.TypeChecker, expr:mypy.nodes.Expression) -> mypy.types.Type :
-    try:
-        return tc.lookup_type(expr)
-    except KeyError as e:
-        print("type not known:" + str(expr))
-        raise e
+    elif isinstance(s,Import):
+        #print("import")
+        return Import(s.ids)
+    elif isinstance(s,ImportAll):
+        #print("import")
+        return ImportAll(s.id,s.relative)
+    elif isinstance(s,ImportFrom):
+        #print("import")
+        return ImportFrom(s.id,s.relative,s.names)
+    elif isinstance(s,FuncDef):
+        #print("func")
+        return FuncDef(s.name,s.arguments,Block(normalize_block(s.body.body),0))
+    elif isinstance(s,ClassDef):
+        #print("class")
+        return ClassDef(s.name,s.rolename,s.base_type_vars,Block(normalize_block(s.defs.body),0))
+    else:
+        raise Exception("no match",s)

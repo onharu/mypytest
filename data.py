@@ -6,6 +6,7 @@ import mypy.types
 import mypy.type_visitor
 import projection
 # 構文木
+
 class Stmt:
     pass
 
@@ -155,8 +156,6 @@ class ImportAll(Stmt):
         self.id = id
         self.relative = relative
 
-# If,Matchは別で
-
 def stmt_to_string(s:Stmt,indent:int) -> str:
     if isinstance(s,Pass):
         return " "*indent + "pass"
@@ -206,16 +205,6 @@ def block_to_string(s:Block,indent:int) -> str:
     return "\n".join(str_list)
 
 def if_to_string(s:If,indent:int) -> str:
-    #print("if_to_string")
-    #print(len(s.expr[1:]))
-
-    # if (elif version)
-    #assert len(s.expr) == len(s.body)
-    #str_if_list:list[str] = []
-    #for i in range(len(s.expr)):
-    #    str_if_list.append(" "*indent + "if "+s.expr[i]+ ":\n" + stmt_to_string(s.body[i],indent+4))
-    #str_if = "\n".join(str_if_list)
-
     str_if = " "*indent + "if " + s.expr + ":\n" + stmt_to_string(s.body,indent+4)
     str_else = " "*indent + "else:\n" + stmt_to_string(s.else_body,indent+4)
     return "\n".join([str_if,str_else])

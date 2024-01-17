@@ -27,10 +27,12 @@ for r in roles:
     pro_filename = filename.replace(".","_"+r+".")
     print(pro_filename)
     f = open(pro_filename,"w")
-    print(pro_filename)
+    f.write("from pychoral import *\n")
+    g = open(pro_filename,"a")
     for stm in projection.projection_all(src.tree.defs,r,typechecker):
-        print(r)
-        f.write((projection.stmt_to_string(stm,0)))
+        projection.stmt_to_string(stm,0)
+        g.write(projection.stmt_to_string(stm,0))
+        #f.write("from pychoral import *\n"+projection.stmt_to_string(stm,0))
 #f = open("ex_A.py","w")
 #for stm in projection.projection_all(src.tree.defs,"A",typechecker):
 #    f.write((projection.stmt_to_string(stm,0)))
