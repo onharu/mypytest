@@ -173,7 +173,8 @@ def merge_exp(e1:str,e2:str) -> str:
 
 # Noop
 def noop(exp:str):# 射影後のExpression(String型)
-    if "Unit.id" in exp:
+    if "Unit.id" == exp:
+    #if exp in "Unit.id":
         return "" # blank
     else:
         return exp # そのまま値を返す
@@ -197,14 +198,19 @@ def normalize(s:Stmt) -> Stmt:
     if isinstance(s, Pass): # pass
         return s
     elif isinstance(s, Return): # return 
-        return s
+        if s.expr == "":
+            return Pass()
+        else:
+            return s
     elif isinstance(s, Es): # expressionStmt
         return Es(noop(s.expr))
     elif isinstance(s,Es2):
         return Es2(s.expr,s.stmt)
     elif isinstance(s,Asg):
-        #print("asg")
-        return Asg(s.lvalues,s.rvalue,s.type)
+        if s.lvalues == s.rvalue == "":
+            return Es("")
+        else:
+            return Asg(s.lvalues,s.rvalue,s.type)
     elif isinstance(s,OpAsg): # operator assignment
         #print("opasg")
         if noop(s.lvalue) == noop(s.rvalue) == "":
@@ -219,11 +225,11 @@ def normalize(s:Stmt) -> Stmt:
         return Block(normalize_block(s.body),0)
     elif isinstance(s,If):
         return If(s.expr,Block(normalize_block(s.body.body),0),Block(normalize_block(s.else_body.body),0))
-    #elif isinstance(s,Match):
-    #    return Match(s.subject,s.patterns,)
-    #elif isinstance(s,OpAsg):
-    #    if noop(s.rvalue)
-    # elif...
+    elif isinstance(s,Match):
+        normalized_bodies:list[Block] = [ ]
+        for body in s.bodies:
+            normalized_bodies += [Block(normalize_block(body.body),0)]
+        return Match(s.subject,s.patterns,normalized_bodies)
     elif isinstance(s,Import):
         #print("import")
         return Import(s.ids)

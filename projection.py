@@ -62,7 +62,7 @@ def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) ->
 
 # 関数定義
 def projection_func(n:mypy.nodes.FuncDef,r:str,tc:mypy.checker.TypeChecker) -> FuncDef:
-    print("func")
+    #print("func")
     args:list[str] = []
     if len(n.arguments) != 0:
         for arg in n.arguments:
@@ -118,22 +118,42 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         return Return(exp) 
     # Assignment
     elif isinstance(s,mypy.nodes.AssignmentStmt):
-        lv = s.lvalues
-        if len(lv) == 1:
-            l = projection_exp(lv[0],r,tc)
-            rvs = projection_exp(s.rvalue,r,tc)
-            t = s.type
-            if t is None and r in help_func.rolesOf(s.rvalue,tc):#型を明示していない場合（型推論で行う場合）
-                return Asg(l,rvs,t)
-            elif t is None and r not in help_func.rolesOf(s.rvalue,tc):
-                return Es(rvs)
-            else:#型明示
-                if r in help_func.rolesOf_t(t,tc): 
-                    return Asg(l,rvs,t) 
-                else:
-                    return Es(rvs) 
-        else:
-            raise Exception("pattern missmatching",s)
+        if isinstance(s.rvalue,mypy.nodes.CallExpr) and \
+            isinstance(s.rvalue.callee, mypy.nodes.IndexExpr) and \
+                isinstance(s.rvalue.callee.index,mypy.nodes.TupleExpr):#コンストラクタ生成
+            lv = s.lvalues
+            if len(lv) == 1:
+                l = projection_exp(lv[0],r,tc)
+                rvs = projection_exp(s.rvalue,r,tc)
+                t = s.type
+                if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
+                    return Asg(l,rvs,t)
+                elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
+                    return Asg("","",t)
+                else:#型明示
+                    if r in help_func.rolesOf_t(t,tc): 
+                        return Asg(l,rvs,t) 
+                    else:
+                        return Asg("","",t)
+            else:
+                raise Exception("pattern missmatching",s)
+        else:#その他の代入文
+            lv = s.lvalues
+            if len(lv) == 1:
+                l = projection_exp(lv[0],r,tc)
+                rvs = projection_exp(s.rvalue,r,tc)
+                t = s.type
+                if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
+                    return Asg(l,rvs,t)
+                elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
+                    return Es(rvs)
+                else:#型明示
+                    if r in help_func.rolesOf_t(t,tc): 
+                        return Asg(l,rvs,t) 
+                    else:
+                        return Es(rvs) 
+            else:
+                raise Exception("pattern missmatching",s)
     # OperatorAssignment
     elif isinstance(s,mypy.nodes.OperatorAssignmentStmt):
         l = projection_exp(s.lvalue,r,tc)
@@ -261,7 +281,8 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                     for exp_i in n.args:
                         exp_list_i.append(projection_exp(exp_i ,r,tc))
                     exp_var_i = ','.join(exp_list_i)
-                    return "Unit.id" + "(" + projection_exp(n.callee.expr,r,tc) + "," + exp_var_i + ")"
+                    #return "Unit.id" + "(" + projection_exp(n.callee.expr,r,tc) + "," + exp_var_i + ")"
+                    return ""
         # クラス定義
         elif isinstance(n.callee, mypy.nodes.IndexExpr):
             exp_list = []
@@ -269,19 +290,21 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
             if isinstance(n.callee.index,mypy.nodes.TupleExpr):
                 for id in n.callee.index.items:
                     id1 = help_func.nameExpr(id)
-                    print(id1)
+                    #print(id1)
                     id_list += [id1]
                 ids = ",".join(id_list)
                 if r in ids: # R in Roles
                     for exp_i in n.args:
-                        exp_list.append(projection_exp(exp_i ,r,tc))
+                        e = projection_exp(exp_i ,r,tc)
+                        print(e)
+                        exp_list.append(e)
                     exp_var = ','.join(exp_list)
                     return help_func.nameExpr(n.callee.base) + "[" + ids + "](" + exp_var + ")"
                 else: # R not in Roles
                     for exp_i in n.args:
                         exp_list.append(projection_exp(exp_i ,r,tc))
                     exp_var = ','.join(exp_list)
-                    return "Unit.id" + "(" + exp_var + ")" 
+                    return help_func.noop("Unit.id" + "(" + exp_var + ")" )
             else:
                 raise Exception
         else:
@@ -297,5 +320,7 @@ def projection_exp(n:mypy.nodes.Expression,r:str,tc:mypy.checker.TypeChecker) ->
                 return "Unit.id"
     elif isinstance(n,mypy.nodes.IntExpr):
         return str(n.value)
+    elif isinstance(n,mypy.nodes.StrExpr):
+        return repr(n.value) # 文字列を''で囲む
     else:
         raise Exception("unexcepted syntax",n)

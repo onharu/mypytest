@@ -1,4 +1,4 @@
-from pychoral import *
+from pychoral2 import *
 from role import *
 class Conv_A():
     def __init__(self):

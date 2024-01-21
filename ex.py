@@ -44,7 +44,7 @@ class Conv(Ch2[A,B]):
   def __init__(self):
     self.chAB : Channel[int,A,B] = Channel[int,A,B]()
 
-  def f(self,a:At[str,A],b:At[str,B]):
+  def f(self,a:At[int,A]) -> At[int,B]:#,b:At[str,B]):
     a = 100@A()
     if a < 123@A():
       return self.chAB.com(123@A())
