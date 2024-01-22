@@ -167,9 +167,13 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
           raise Exception("None error")
         else_projected = projection_block(s.else_body.body,r,tc)
         if "Unit.id" in exp:
-            stm1 = help_func.normalize(Block(stm,4))
-            stm2 = help_func.normalize(Block(else_projected,4))
-            return Es2(exp,help_func.merge(stm1,stm2))
+            stm1 = help_func.normalize_block(stm)
+            stm2 = help_func.normalize_block(else_projected)
+            #for i in range(len(stm1)):
+            #    print("Stm1."+str(i)+" = " +help_func.stmt_to_string(stm1[i],0))
+            #for j in range(len(stm2)):
+            #    print("Stm1."+str(j)+" = " +help_func.stmt_to_string(stm2[i],0))
+            return Es2(exp,help_func.merge_block(stm1,stm2))
         else:
             return If(exp,Block(stm,4),Block(else_projected,4))
     # Es

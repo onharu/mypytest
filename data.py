@@ -46,7 +46,7 @@ class Es(Stmt): # e1; s
         self.expr = exp
 
 class Es2(Stmt): #e;stm1 stm2; stm
-    def __init__(self, exp:str, stmt:Stmt):
+    def __init__(self, exp:str, stmt:list[Stmt]):
         self.expr = exp
         self.stmt = stmt
 
@@ -168,10 +168,11 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
     elif isinstance(s,Es):
         return " "*indent + s.expr
     elif isinstance(s,Es2):
-        if "Unit.id" in s.expr:
-            return " "*indent + stmt_to_string(s.stmt,0)
-        else:
-            return " "*indent + s.expr + "\n" + stmt_to_string(s.stmt,indent)
+        return es2_to_string(s,indent)
+    #    if "Unit.id" in s.expr:
+    #        return " "*indent + stmt_to_string(s.stmt,0)
+    #    else:
+    #        return " "*indent + s.expr + "\n" + stmt_to_string(s.stmt,indent)
     elif isinstance(s,Asg):
         return " "*indent + s.lvalues + " = " + s.rvalue
     elif isinstance(s,OpAsg):
@@ -216,3 +217,13 @@ def match_to_string(s:Match,indent:int) -> str:
         case_and_body_list.append(" "*(indent+4) + "case " + s.patterns[i] + ":\n" + stmt_to_string(s.bodies[i],indent+8))
     case_and_body = "\n".join(case_and_body_list)
     return " "*indent + "match " + s.subject + ":\n" + case_and_body
+
+def es2_to_string(s:Es2,indent:int) -> str:
+    str_list:list[str] = []
+    for stm in s.stmt:
+        str_list.append(stmt_to_string(stm,indent))
+    es2_slist =  "\n".join(str_list)
+    if "Unit.id" in s.expr:
+        return es2_slist
+    else:
+        return " "*indent + s.expr + "\n" + es2_slist

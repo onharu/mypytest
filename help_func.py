@@ -84,28 +84,34 @@ def get(tlist:list[tuple[str,str|None]]) -> list[str]:
     return str_list
 
 # merging
+
+def merge_block(s1:list[Stmt],s2:list[Stmt]) -> list[Stmt]:
+    merged_list:list[Stmt] = []
+    for (t1,t2) in zip(s1,s2):
+        merged_list.append(merge(t1,t2))
+    return merged_list
+
 # 同じstm,expはそのまま残す,後に続くStmも同じでないとマージされない
 def merge(s1:Stmt, s2:Stmt) -> Stmt: 
     # Block (list[stm])
     if isinstance(s1,Block) and isinstance(s2,Block):
-        #merge_list:list[Stmt] = []
-        # listの要素にマージの再帰を定義する
-        # s=[s1, s2, s3 ...]  s'=[s1', s2', s3' ...]のとき
-        # s ⊔ s' = [s1 ⊔ s1', s2 ⊔ s2', s3 ⊔ s3', ...]
-        for t1 in s1.body:
-            for t2 in s2.body:
-                ms = merge(t1,t2)
-        return ms
-                #merge_list += [merge(t1,t2)]
-        #return merge_list    
+        return Block(merge_block(s1.body,s2.body),0)
     # return
     elif isinstance(s1,Return) and isinstance(s2,Return):
-        print(stmt_to_string(s1,0))
-        print(stmt_to_string(s2,0))
+        print("return")
+        #print(stmt_to_string(s1,0))
+        #print(stmt_to_string(s2,0))
         if s1.expr == s2.expr:
             return s1
         else:
             raise Exception()
+    # Asg
+    elif isinstance(s1,Asg) and isinstance(s2,Asg):
+        print("asg")
+        if s1.lvalues == s2.lvalues and s1.rvalue == s2.rvalue:
+            return Asg(s1.lvalues,s1.rvalue,s1.type)
+        else:
+            raise Exception
     # AsgOp
     elif isinstance(s1,OpAsg) and isinstance(s2,OpAsg):
         if s1.lvalue == s2.lvalue and s1.rvalue == s2.rvalue:
@@ -114,6 +120,7 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
             raise Exception #merge(s1.stmt,s2.stmt)
     # e;s
     elif isinstance(s1,Es) and isinstance(s2,Es):
+        print("Es")
         if s1.expr == s2.expr:
             return s1
         else:
@@ -161,6 +168,9 @@ def merge(s1:Stmt, s2:Stmt) -> Stmt:
             return s1
         else:
             raise Exception
+    # Pass
+    elif isinstance(s1,Pass) and isinstance(s2,Pass):
+        return s1
     #others
     else:
         raise Exception

@@ -28,7 +28,8 @@ for r in roles:
     pro_filename = pychoralfile.replace(".","_"+r+".")
     print(pro_filename)
     f = open(pro_filename,"w")
-    f.write("from pychoral3 import *\n") # 通信するroleによって名前変更が必要(pychoral2 or pychoral3)
+    #f.write("from pychoral3 import *\n")
+    f.write("from pychoral"+str(len(roles))+" import *\n") # 通信するroleによって名前変更が必要(pychoral2 or pychoral3)
     g = open(pro_filename,"a")
     for stm in projection.projection_all(src.tree.defs,r,typechecker):
         projection.stmt_to_string(stm,0)

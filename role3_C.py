@@ -7,5 +7,5 @@ class Conv_C():
         self.chCA = Channel[str,C,A]('C','A')
     def f(self):
         
-        b = self.chBC.com()
-        return Unit.id(self.chCA.com(b))
+        y = self.chBC.com()
+        return Unit.id(self.chCA.com(y))

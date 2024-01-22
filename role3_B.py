@@ -6,6 +6,6 @@ class Conv_B():
         self.chBC = Channel[str,B,C]('B','C')
         
     def f(self):
-        a = self.chAB.com()
-        Unit.id(self.chBC.com(a))
+        x = self.chAB.com()
+        Unit.id(self.chBC.com(x))
         pass
