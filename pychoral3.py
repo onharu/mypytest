@@ -93,22 +93,28 @@ def start_processes(f_A, f_B, f_C):
 
 def connectA(f,pipe_AtoB,pipe_AtoC):
     global parent_pipeA
-    parent_pipeA = pipe_AtoB
-    parent_pipeA = pipe_AtoC
+    global roledict 
+    roledict = {"A":None,"B":pipe_AtoB,"C":pipe_AtoC}
+    #parent_pipeA = pipe_AtoB
+    #parent_pipeA = pipe_AtoC
     print("pipe_AtoB,pipe_AtoC are connected")
     f()
 
 def connectB(f,pipe_BtoC,pipe_BtoA):
     global parent_pipeB
-    parent_pipeB = pipe_BtoC
-    parent_pipeB = pipe_BtoA
+    global roledict 
+    roledict = {"A":pipe_BtoA,"B":None,"C":pipe_BtoC}
+    #parent_pipeB = pipe_BtoC
+    #parent_pipeB = pipe_BtoA
     print("pipe_BtoC,pipe_BtoA are connected")
     f()
 
 def connectC(f,pipe_CtoA,pipe_CtoB):
     global parent_pipeC
-    parent_pipeC = pipe_CtoA
-    parent_pipeC = pipe_CtoB
+    global roledict 
+    roledict = {"A":pipe_CtoA,"B":pipe_CtoB,"C":None}
+    #parent_pipeC = pipe_CtoA
+    #parent_pipeC = pipe_CtoB
     print("pipe_CtoA,pipe_CtoB are connected")
     f()
             
