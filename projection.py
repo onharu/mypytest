@@ -73,6 +73,10 @@ def projection_class(n:mypy.nodes.ClassDef,r:str,tc:mypy.checker.TypeChecker) ->
                 return ClassDef(n.name,r,exprs,Block(s_list,4))
             else:
                 raise Exception("not role")
+    elif isinstance(n.base_type_exprs[0],mypy.nodes.NameExpr) and n.base_type_exprs[0].name == "Enum":
+        assert len(n.base_type_exprs) == 1
+        s_list = projection_block(n.defs.body,r,tc)
+        return ClassDef(n.name,"",[help_func.nameExpr(n.base_type_exprs[0])],Block(s_list,4))
     #elif str(n.base_type_exprs[0]) == "Enum":
     #    return EnumClass(n.name,n.base_type_exprs[0],Block(s_list,4))
     else: # Chクラスを継承していない場合
@@ -137,6 +141,41 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         return Return(exp) 
     # Assignment
     elif isinstance(s,mypy.nodes.AssignmentStmt):
+        lv = s.lvalues
+        t = s.type
+        if len(lv) == 1: # 左辺のExpressionは単項
+            l = projection_exp(lv[0],r,tc)
+            # コンストラクタ生成
+            if isinstance(s.rvalue,mypy.nodes.CallExpr) and \
+            isinstance(s.rvalue.callee, mypy.nodes.IndexExpr) and \
+            isinstance(s.rvalue.callee.index,mypy.nodes.TupleExpr):
+                rvs = projection_exp(s.rvalue,r,tc)
+                if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
+                    return Asg(l,rvs,t)
+                elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
+                    return Asg("","",t)
+                else:#型明示
+                    if r in help_func.rolesOf_t(t,tc): 
+                        return Asg(l,rvs,t) 
+                    else:
+                        return Asg("","",t)
+            else:#その他の代入文
+                rvs = projection_exp(s.rvalue,r,tc)
+                if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
+                    return Asg(l,rvs,t)
+                elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
+                    return Es(rvs)
+                else:#型明示
+                    print(t)
+                    if r in help_func.rolesOf_t(t,tc): 
+                        return Asg(l,rvs,t) 
+                    else:#Enumクラスの要素の扱い
+                        if "Literal" in str(t):
+                            return Asg(help_func.nameExpr(lv[0]),rvs,t)
+                        else:
+                            return Es(rvs) 
+        else:
+            raise Exception("pattern missmatching",s)
         # Enumの生成 Enumクラス名 = Enum('Enumクラス名',[要素(str)])
         #if isinstance(s.rvalue,mypy.nodes.EnumCallExpr):
         #    print("enum")
@@ -154,44 +193,38 @@ def projection_stm(s:mypy.nodes.Statement,r:str,tc:mypy.checker.TypeChecker) -> 
         #    else:
         #        raise Exception("pattern missmatching",s)
         #コンストラクタ生成
-        if isinstance(s.rvalue,mypy.nodes.CallExpr) and \
-        isinstance(s.rvalue.callee, mypy.nodes.IndexExpr) and \
-        isinstance(s.rvalue.callee.index,mypy.nodes.TupleExpr):
-            
-            lv = s.lvalues
-            if len(lv) == 1:
-                l = projection_exp(lv[0],r,tc)
-                rvs = projection_exp(s.rvalue,r,tc)
-                t = s.type
-                if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
-                    return Asg(l,rvs,t)
-                elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
-                    return Asg("","",t)
-                else:#型明示
-                    if r in help_func.rolesOf_t(t,tc): 
-                        return Asg(l,rvs,t) 
-                    else:
-                        return Asg("","",t)
-            else:
-                raise Exception("pattern missmatching",s)
-        else:#その他の代入文
-            lv = s.lvalues
-            t = s.type
-            
-            if len(lv) == 1:
-                l = projection_exp(lv[0],r,tc)
-                rvs = projection_exp(s.rvalue,r,tc)
-                if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
-                    return Asg(l,rvs,t)
-                elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
-                    return Es(rvs)
-                else:#型明示
-                    if r in help_func.rolesOf_t(t,tc): 
-                        return Asg(l,rvs,t) 
-                    else:
-                        return Es(rvs) 
-            else:
-                raise Exception("pattern missmatching",s)
+        #if isinstance(s.rvalue,mypy.nodes.CallExpr) and \
+        #isinstance(s.rvalue.callee, mypy.nodes.IndexExpr) and \
+        #isinstance(s.rvalue.callee.index,mypy.nodes.TupleExpr):
+        #    if len(lv) == 1:
+        #        l = projection_exp(lv[0],r,tc)
+        #        rvs = projection_exp(s.rvalue,r,tc)
+        #        if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
+        #            return Asg(l,rvs,t)
+        #        elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
+        #            return Asg("","",t)
+        #        else:#型明示
+        #            if r in help_func.rolesOf_t(t,tc): 
+        #                return Asg(l,rvs,t) 
+        #            else:
+        #                return Asg("","",t)
+        #    else:
+        #        raise Exception("pattern missmatching",s)
+        #else:#その他の代入文
+        #    if len(lv) == 1:
+        #        l = projection_exp(lv[0],r,tc)
+        #        rvs = projection_exp(s.rvalue,r,tc)
+        #        if (t is None) and (r in help_func.rolesOf(s.rvalue,tc)):#型を明示していない場合（型推論で行う場合）
+        #            return Asg(l,rvs,t)
+        #        elif (t is None) and (r not in help_func.rolesOf(s.rvalue,tc)):
+        #            return Es(rvs)
+        #        else:#型明示
+        #            if r in help_func.rolesOf_t(t,tc): 
+        #                return Asg(l,rvs,t) 
+        #            else:
+        #                return Es(rvs) 
+        #    else:
+        #        raise Exception("pattern missmatching",s)
     # OperatorAssignment
     elif isinstance(s,mypy.nodes.OperatorAssignmentStmt):
         l = projection_exp(s.lvalue,r,tc)

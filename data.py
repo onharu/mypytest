@@ -199,7 +199,10 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
         else:
             return " "*indent + "def " + s.name + "():\n" + stmt_to_string(s.body,indent+4)
     elif isinstance(s,ClassDef):
-        return " "*indent + "class " + s.name + "_" + s.rolename + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
+        if s.rolename != "":
+            return " "*indent + "class " + s.name + "_" + s.rolename + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
+        else:
+            return " "*indent + "class " + s.name + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4) + "\n"
     elif isinstance(s,EnumClass):
         return " "*indent + "class " + s.name + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
     elif isinstance(s,Import):
