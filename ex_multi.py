@@ -3,7 +3,7 @@ from multiprocessing import Process, Queue , Pipe
 import subprocess
 import ex_A,ex_B
 import role3_A, role3_B, role3_C
-import pychoral2, pychoral3
+import pychoral2
 
 def run_A():# プロジェクション後のファイル(class)を呼び出す
     #pychoral.myrole = A
@@ -15,3 +15,6 @@ def run_B():# プロジェクション後のファイル(class)を呼び出す
     conv_b = ex_B.Conv_B()
     v = conv_b.f()
     print(v)
+
+if __name__ == "__main__":
+    pychoral2.start_processes(run_A, run_B)

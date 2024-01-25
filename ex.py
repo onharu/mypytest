@@ -39,15 +39,15 @@
 #    b:At[str,B] = "Hello from B"@B()
 #    print(a@A())
 #    print(b@B())
+
 from role import *
 class Conv(Ch2[A,B]):
   def __init__(self):
     self.chAB : Channel[int,A,B] = Channel[int,A,B]()
 
-  def f(self,a:At[int,A]) -> At[int,B]:#,b:At[str,B]):
+  def f(self,a:At[int,A]) -> At[int,B]:
     a = 100@A()
     if a < 123@A():
       return self.chAB.com(123@A())
     else:
       return self.chAB.com(a)
-      #return self.chAB.com(100@A())

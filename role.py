@@ -10,6 +10,9 @@ class B(Role):
 class C(Role):
     def __matmul__(self, x): # @ を使えるようにする
         pass
+class S(Role):
+    def __matmul__(self, x): # @ を使えるようにする
+        pass
 # Travel-Agency
 class Customer(Role):
     def __matmul__(self, x): # @ を使えるようにする
@@ -28,5 +31,9 @@ class S1(Role):
     def __matmul__(self, x): # @ を使えるようにする
         pass
 class S2(Role):
+    def __matmul__(self, x): # @ を使えるようにする
+        pass
+# Check
+class Clerk(Role):
     def __matmul__(self, x): # @ を使えるようにする
         pass

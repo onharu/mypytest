@@ -15,24 +15,27 @@ class Mergesort(Ch3[A,B,C]):
   #  ch_BC = Channel[object,B,C]("B","C")
   #  ch_CA = Channel[object,C,A]("C","A")
 
-  def __init__(self):
+  def __init__(self) -> None:
       self.ch_AB:Channel[object,A,B] = Channel[object,A,B]("A","B")
+      self.ch_AC:Channel[object,A,C] = Channel[object,A,C]("A","C")
       self.ch_BC:Channel[object,B,C] = Channel[object,B,C]("B","C")
+      self.ch_BA:Channel[object,B,A] = Channel[object,B,A]("B","A")
       self.ch_CA:Channel[object,C,A] = Channel[object,C,A]("C","A")
+      self.ch_CB:Channel[object,C,B] = Channel[object,C,B]("C","B")
 
   def sort(self,a:At[list[int],A]):
     if len(a) > 1@A():
       self.ch_AB.select(MChoice.L@A())
-      self.ch_CA.select(MChoice.L@A())
+      self.ch_AC.select(MChoice.L@A())
       pivot:At[float,A] = float(math.floor(len(a)/2@A())@A())@A()
       mb:Mergesort(Ch3[B,C,A]) = Mergesort(Ch3[B,C,A])
       mc:Mergesort(Ch3[C,A,B]) = Mergesort(Ch3[C,A,B])
       lhs:At[list[int],B] = mb.sort(self.ch_AB.com(a[0@A():int(pivot)]))
-      rhs:At[list[int],C] = mc.sort(self.ch_CA.com(a[int(pivot):len(a)]))
+      rhs:At[list[int],C] = mc.sort(self.ch_AC.com(a[int(pivot):len(a)]))
       return merge(self.ch_AB.com(lhs),self.ch_AB.com(rhs))
     else:
       self.ch_AB.select(MChoice.R@A())
-      self.ch_CA.select(MChoice.R@A())
+      self.ch_AC.select(MChoice.R@A())
       return a
     
   def merge(self,lhs:At[list[int],B],rhs:At[list[int],C]) -> At[list[int],A]:

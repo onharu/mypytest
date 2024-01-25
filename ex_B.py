@@ -5,4 +5,5 @@ class Conv_B():
         self.chAB = Channel[int,A,B]()
     def f(self):
         
+        
         return self.chAB.com()

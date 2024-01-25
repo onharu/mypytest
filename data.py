@@ -138,6 +138,18 @@ class ClassDef(Stmt):
         self.base_type_vars = base_type_vars
         self.defs = defs
 
+class EnumClass(Stmt):
+    def __init__(
+            self,
+            name:str,
+            base_type_vars:str,
+            #base_type_vars:Enum
+            defs: Block
+    ):
+        self.name = name
+        self.base_type_vars = base_type_vars
+        self.defs = defs
+
 #Import文にasを使わない
         
 class Import(Stmt):
@@ -188,6 +200,8 @@ def stmt_to_string(s:Stmt,indent:int) -> str:
             return " "*indent + "def " + s.name + "():\n" + stmt_to_string(s.body,indent+4)
     elif isinstance(s,ClassDef):
         return " "*indent + "class " + s.name + "_" + s.rolename + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
+    elif isinstance(s,EnumClass):
+        return " "*indent + "class " + s.name + "(" + ",".join(s.base_type_vars) + "):\n" + stmt_to_string(s.defs,indent+4)
     elif isinstance(s,Import):
         return " "*indent + "import " + ",".join(s.ids) + "\n"
     elif isinstance(s,ImportFrom):

@@ -34,29 +34,20 @@ if TYPE_CHECKING:
 #    def __repr__(self):
 #        return f"{self.var}"
     
+# 関数定義
 def projection_func(n:mypy.nodes.FuncDef,r:str,tc:mypy.checker.TypeChecker) -> FuncDef:
-    print("def!")
+    #print("func")
     args:list[str] = []
     if len(n.arguments) != 0:
         for arg in n.arguments:
             if arg.type_annotation is not None and r in help_func.rolesOf_t(arg.type_annotation,tc):
-                print(type(help_func.rolesOf_t(arg.type_annotation,tc)))
-                print("rolesOf_t = "+help_func.list_to_str(help_func.rolesOf_t(arg.type_annotation,tc)))
-                #print(arg.type_annotation)
-                #print(arg.variable.name)
                 args.append(arg.variable.name)
             elif arg.type_annotation is not None and r not in help_func.rolesOf_t(arg.type_annotation,tc):
-                print(type(help_func.rolesOf_t(arg.type_annotation,tc)))
-                print("rolesOf_t = "+help_func.list_to_str(help_func.rolesOf_t(arg.type_annotation,tc)))
                 args
             elif arg.type_annotation is None:
                 args.append(arg.variable.name)
             else:
-                raise Exception
+                raise Exception("pattern missmatching",n.arguments)
         return FuncDef(n.name,args,Block(projection_block(n.body.body,r,tc),4))
     else:
         return FuncDef(n.name,[],Block(projection_block(n.body.body,r,tc),4))
-    
-            
-    # list[Argument]じゃなくてlist[Expression]にしたい　→　どうすればいいか？
-    #　xの型推論の結果からroleをとる

@@ -1,4 +1,5 @@
 ## 補助関数の集合ファイル
+import sys
 import mypy
 import mypy.visitor
 import mypy.nodes
@@ -33,14 +34,17 @@ def get_typearg(t:mypy.types.ProperType,i:int) -> str:
 
 # rolesOf(e) -> str
 def rolesOf(n:mypy.nodes.Expression, typeChecker:mypy.checker.TypeChecker) -> list[str]:
+    #print(str(n))
     t0 = help_func.get_type(typeChecker, n)
     if isinstance(t0,mypy.types.ProperType):
+        #print("t0 = "+str(t0))
         if get_typename(t0) == "At":
             return [get_typearg(t0,1)]
         elif get_typename(t0) == "Channel":
             return [get_typearg(t0,1),get_typearg(t0,2)]
         else:
-            raise Exception
+            return [""]
+            #raise Exception
     else:
         raise Exception
 # rolesOf(type) -> str
@@ -51,7 +55,8 @@ def rolesOf_t(n:mypy.types.Type | None, typeChecker:mypy.checker.TypeChecker) ->
         elif get_typename(n) == "Channel":
             return [get_typearg(n,1),get_typearg(n,2)]
         else:
-            raise Exception
+            return [""]
+            #raise Exception
     else:
         raise Exception
 
@@ -66,7 +71,7 @@ def nameExpr(e:mypy.nodes.Expression) -> str:
     
 def isNone(n:mypy.nodes.Node):
     if n is None:
-        raise Exception
+        sys.exit(1)
     else:
         pass
 
@@ -88,6 +93,8 @@ def get(tlist:list[tuple[str,str|None]]) -> list[str]:
 def merge_block(s1:list[Stmt],s2:list[Stmt]) -> list[Stmt]:
     merged_list:list[Stmt] = []
     for (t1,t2) in zip(s1,s2):
+        print(stmt_to_string(t1,0))
+        print(stmt_to_string(t2,0))
         merged_list.append(merge(t1,t2))
     return merged_list
 
